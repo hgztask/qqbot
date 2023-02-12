@@ -42,6 +42,11 @@ public class SignalUtil {
     private static final String GROUP_INFO_ENDPOINT = "/get_group_info";
 
     /**
+     * 获取消息终结点
+     */
+    private static final String GET_MSG = "/get_msg";
+
+    /**
      * 处理加群请求／邀请
      */
     private static final String SET_GROUP_ADD_REQUEST = "/set_group_add_request";
@@ -229,8 +234,22 @@ public class SignalUtil {
      * @param message_id 消息 ID
      * @return 该 API 无响应数据
      */
-    public static JSONObject deleteMsg(String message_id) {
+    @SuppressWarnings("all")
+    public static JSONObject deleteMsg(@NonNull String message_id) {
         return httpGet(DELETE_MSG, "?message_id=" + message_id);
     }
+
+
+    /**
+     * 根据消息ID获取原消息
+     *
+     * @param message_id 消息ID
+     * @return json对象
+     */
+    @SuppressWarnings("all")
+    public static JSONObject getMessage(@NonNull String message_id) {
+        return SignalUtil.httpGet(SignalUtil.GET_MSG, "?message_id=" + message_id);
+    }
+
 
 }
