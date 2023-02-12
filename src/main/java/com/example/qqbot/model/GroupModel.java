@@ -9,8 +9,11 @@ import com.example.qqbot.Util.UserInfoUtil;
 import com.example.qqbot.data.DataGroup;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.*;
 
 /**
@@ -33,21 +36,19 @@ public class GroupModel implements Runnable {
     private JSONObject jsonObject;
 
     /**
-     * message类
+     * 黑名单
      */
-    private final Map<String, Object> message;
-
+    private static final File BLACK_PATHF_FILE = new File("E:\\黑名单群聊.json");
 
     public GroupModel(DataGroup dataGroup, JSONObject jsonObject) {
         this.dataGroup = dataGroup;
         this.jsonObject = jsonObject;
-        this.message = JSONUtil.parseObj(dataGroup.getMessage().get(0));
     }
 
     /**
      * 黑名单群组
      */
-    private static final List<String> groupIDArray = ListUtil.toList();
+    private static List<String> BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
 
 
     /**
@@ -66,12 +67,14 @@ public class GroupModel implements Runnable {
         String group_id = dataGroup.getGroup_id();
         List<String> re_reading_member_set = ReReadingModel.getMEMBER_SET();
         //过滤
-        if (groupIDArray.contains(group_id)) {
+        if (BLACKGROUPID.contains(group_id)) {
             log.info(group_id + "群触发了黑名单了");
             return;
         }
         String raw_message = dataGroup.getRaw_message();
         log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
+
+
         //实现触发某个关键词回复
         HashMap<String, String> data = new HashMap<>();
         data.put("group_id", dataGroup.getGroup_id());
@@ -96,22 +99,12 @@ public class GroupModel implements Runnable {
                     "星火服公会ID：00009669\n" +
                     "星火就是官服如官网下载taptap下载等，反之星标即渠道服，手机商店下载", dataGroup.getUser_id()));
             json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
-        } else if (raw_message.contains("蓝奏云资源搜索=")) {
-            if (!raw_message.startsWith("蓝奏云资源搜索=")) {
-                log.info("用户触发了蓝奏云资源搜索,但是未按照格式书写!");
+        } else if (raw_message.startsWith("蓝奏云资源搜索=") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) {
+            String key = subEqual("=", raw_message);
+            if (key.isEmpty()) {
                 return;
             }
-            raw_message = raw_message.substring(8).trim(); //获取到用户要搜索的内容,并去除关键词前后空格
-            if (raw_message.isEmpty() || raw_message.length() < 3) {
-                log.info("用户触发了蓝奏云资源搜索，当关键词为空或者长度小于3，请正确输入内容");
-                return;
-            }
-            if (DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) {
-                log.info("超级用户执行了该模块");
-                new LanZuoCloudResourceSearch(raw_message, dataGroup).run();
-                return;
-            }
-            log.info("非超级用户尝试执行该模块但是被拒绝了");
+            new LanZuoCloudResourceSearch(key, dataGroup).run();
             return;
         } else if (raw_message.startsWith("添加复读机成员") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
             //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
@@ -128,7 +121,22 @@ public class GroupModel implements Runnable {
             }
             ReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
             return;
-        } else if (re_reading_member_set.contains(dataGroup.getUser_id())) {
+        } else if (raw_message.startsWith("添加触发复读机关键词=") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
+            String key = subEqual("=", raw_message);
+            if (key.isEmpty()) {
+                return;
+            }
+            ReReadingModel.addKeySet(dataGroup, key);
+            return;
+        } else if (raw_message.startsWith("移除触发复读机关键词=") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
+            String key = subEqual("=", raw_message);
+            if (key.isEmpty()) {
+                return;
+            }
+            ReReadingModel.removeKeySet(dataGroup, key);
+            return;
+        } else if (re_reading_member_set.contains(dataGroup.getUser_id()) || GroupModel.keyContains(ReReadingModel.getKEY_SET(), filtrationCQ(raw_message))) {
+            //复读模块
             new ReReadingModel(dataGroup).run();
             return;
         } else {
@@ -145,10 +153,12 @@ public class GroupModel implements Runnable {
 
     /**
      * 判断数组里的符合元素的对象
+     *
      * @param listContent 集合对象
      * @param raw_message 关键对象
      * @return
      */
+    @SuppressWarnings("all")
     private static boolean isContainsMessAge(List<String> listContent, String raw_message) {
         for (String s : listContent) {
             if (s.contains(raw_message)) {
@@ -157,6 +167,96 @@ public class GroupModel implements Runnable {
         }
         return false;
     }
+
+    /**
+     * 获取指定关键词后面的内容
+     * 且关键词是最靠前的那一个
+     * 如果截取不到或者就是字符串开头第一个则返回空的字符串
+     *
+     * @param key 关键词
+     * @param str 字符串
+     * @return 截取之后的内容
+     */
+    public static String subEqual(String key, String str) {
+        int i = str.indexOf(key);
+        if (i == -1 || i == 0) {
+            return "";
+        }
+        str = str.substring(i + 1).trim();
+
+        return str;
+    }
+
+    /**
+     * 获取指定关键词后面的内容
+     * 且关键词是最靠前后的那一个
+     * 如果截取不到或者就是字符串开头第一个则返回空的字符串
+     *
+     * @param key 关键词
+     * @param str 内容
+     * @return 截取之后的内容
+     */
+    public static String lastSubEqual(String key, String str) {
+        int i = str.lastIndexOf(key);
+        if (i == -1 || i == 0) {
+            return "";
+        }
+        str = str.substring(i + 1).trim();
+
+        return str;
+    }
+
+
+    /**
+     * 遍历集合对象中key与content是否是包含关系
+     * 比如:集合内有key=舞台,content=物天空下起下午,舞台开始了,那么key是content的其中的一部分
+     *
+     * @param list    集合
+     * @param content 关键词
+     * @return 布尔值
+     */
+    public static boolean keyContains(List<String> list, String content) {
+        if (content.isEmpty()) {
+            return false;
+        }
+        for (String key : list) {
+            if (content.contains(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 过滤消息中的CQ码,如头部[CQ:我是CQ的内容]尾部
+     * 过滤之后=头部尾部
+     * 如果过滤之后还是跟原来的一样,就返回原来的字符串
+     *去除字符串中[CQ:....]中的CQ内容
+     * @param content 要过滤的字符串
+     * @return 过滤之后的结果
+     */
+    public static String filtrationCQ(@NonNull String content) {
+        String str = content.replaceAll("(\\[CQ:).*?(\\])", "");
+        if (str.isEmpty()) {
+            return "";
+        }
+        if (str.equals(content)) {
+            return content;
+        }
+        return str;
+    }
+
+    /**
+     * 刷新黑名单群聊数据并重新赋值
+     * 会重新读取本地指定路径的json文件重新赋值给指定集合对象
+     *
+     * @param user_id 接受消息者 一般是超级用户
+     */
+    public static void readFIlePathBlackList(String user_id) {
+        BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
+        SignalUtil.sendPrivateMessage(user_id, "已刷新黑名单群聊数据并重新赋值!");
+    }
+
 
 }
 

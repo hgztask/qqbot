@@ -58,17 +58,6 @@ public class Day60World implements Runnable {
 
 
 
-class Demo{
-    @Test
-    void test0() {
-        long time=1676130683;
-
-        DateTime date = DateUtil.date(time);
-        //DateUtil.date
-
-    }
-
-}
 
 
 

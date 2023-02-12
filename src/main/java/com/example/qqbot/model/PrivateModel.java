@@ -36,8 +36,12 @@ public class PrivateModel implements Runnable {
             return;
         } else if (raw_message.startsWith("打印触发复读机关键词") && DataUserEights.SUPERUSER.contains(user_id)) { //需要超级用户权限
             ReReadingModel.printKeySet(user_id);
+            return;
         } else if (raw_message.startsWith("打印复读机成员") && DataUserEights.SUPERUSER.contains(user_id)) {//需要超级用户权限
             ReReadingModel.printReReadingMemberSet(user_id);
+            return;
+        } else if (raw_message.startsWith("刷新黑名单群聊数据") || DataUserEights.SUPERUSER.contains(user_id)) {//需要超级用户权限
+            GroupModel.readFIlePathBlackList(user_id);
             return;
         }
         //实现一个复读机

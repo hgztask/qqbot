@@ -47,6 +47,7 @@ public class ReReadingModel implements Runnable {
     /**
      * 自动触发复读机的关键词集合
      */
+    @Getter
     private static List<String> KEY_SET = getFileJson(KEYPATH_FILE);
 
     public ReReadingModel(DataGroup dataGroup) {
@@ -58,12 +59,11 @@ public class ReReadingModel implements Runnable {
      *
      * @return arrayList对象
      */
-    private static ArrayList<String> getFileJson(File file) {
+    public static ArrayList<String> getFileJson(File file) {
         if (!(file.isFile())) {
             return new ArrayList<>(0);
         }
         List jsonArray = JSONUtil.readJSONArray(file, StandardCharsets.UTF_8);
-        System.out.println(jsonArray.toString());
         return new ArrayList<>(jsonArray);
     }
 
@@ -73,21 +73,13 @@ public class ReReadingModel implements Runnable {
      */
     public static void addReReadingMemberSet(DataGroup dataGroup, String userATID) {
         if (MEMBER_SET.contains(userATID)) {
-            JSONObject json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该用户已经设置过了!");
-            if (json.isEmpty()) {
-                log.info("设置要复读的人员功能模块-回复设置过-请求失败了");
-            }
+          SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该用户已经设置过了!");
             return;
         }
         MEMBER_SET.add(userATID);
         //修改本地文件
         FileUtil.writeUtf8String(JSONUtil.parseArray(MEMBER_SET).toStringPretty(), MEMBER_PATH_FILE);
-        JSONObject json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), String.format("已将该成员%s设置为复读机对象", userATID));
-        if (json.isEmpty()) {
-            log.info("设置要复读的人员功能模块-已将该成员设置对象-请求失败了");
-            return;
-        }
-        log.info("设置要复读的人员功能模块-已将该成员设置对象-请求成功!");
+       SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), String.format("已将该成员%s设置为复读机对象", userATID));
     }
 
 
@@ -98,21 +90,13 @@ public class ReReadingModel implements Runnable {
      */
     public static void addKeySet(DataGroup dataGroup, String key) {
         if (KEY_SET.contains(key)) {
-            JSONObject json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该关键词已经设置过了!");
-            if (json.isEmpty()) {
-                log.info("添加触发复读机关键词-回复设置过-请求失败了");
-            }
+        SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该关键词已经设置过了!");
             return;
         }
         KEY_SET.add(key);
         //修改本地文件
         FileUtil.writeUtf8String(JSONUtil.parseArray(KEY_SET).toStringPretty(), KEYPATH_FILE);
-        JSONObject json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "已添加该关键词作为复读机触发条件之一=" + key);
-        if (json.isEmpty()) {
-            log.info("添加触发复读机关键词-发送消息-请求失败了");
-            return;
-        }
-        log.info("添加触发复读机关键词-发送消息-请求成功!");
+       SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "已添加该关键词作为复读机触发条件=" + key);
     }
 
 
@@ -132,16 +116,18 @@ public class ReReadingModel implements Runnable {
 
     /**
      * 打印触发复读机关键词集合
+     * <p>
+     * 触发在私聊窗口
      *
      * @param user_id
      */
     public static void printKeySet(String user_id) {
         String toStringPretty = JSONUtil.parseArray(KEY_SET).toStringPretty();
-        if (SignalUtil.sendPrivateMessage(user_id, toStringPretty).isEmpty()) {
+        if (SignalUtil.sendPrivateMessage(user_id, String.format("自动触发复读机关键词:\n%s", toStringPretty)).isEmpty()) {
             log.info("打印触发复读机关键词集合-失败!");
             return;
         }
-        log.info("打印触发复读机关键词集合-失败!");
+        log.info("打印触发复读机关键词集合-成功!");
     }
 
 
@@ -188,12 +174,16 @@ public class ReReadingModel implements Runnable {
     @Override
     public void run() {
         String raw_message = dataGroup.getRaw_message();
-        JSONObject json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), raw_message);
+        String group_id = dataGroup.getGroup_id();
+
+        JSONObject json = SignalUtil.sendGroupMessage(group_id, raw_message);
         if (json.isEmpty()) {
             return;
         }
         log.info("复读机请求成功!");
     }
+
+
 
 
 }

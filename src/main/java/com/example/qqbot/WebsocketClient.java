@@ -42,7 +42,6 @@ public class WebsocketClient {
                 public void onOpen(ServerHandshake handshakedata) {
                     log.info("[websocket] 连接成功");
                 }
-
                 @SuppressWarnings("all")
                 @Override
                 public void onMessage(String json) {
