@@ -3,15 +3,13 @@ package com.example.qqbot.model;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.example.qqbot.SignalUtil;
 import com.example.qqbot.Util.UserInfoUtil;
-import com.example.qqbot.data.DataGroup;
+import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.*;
@@ -256,7 +254,6 @@ public class GroupModel implements Runnable {
         BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
         SignalUtil.sendPrivateMessage(user_id, "已刷新黑名单群聊数据并重新赋值!");
     }
-
 
 }
 

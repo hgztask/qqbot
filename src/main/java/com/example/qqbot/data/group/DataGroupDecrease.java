@@ -1,4 +1,4 @@
-package com.example.qqbot.data;
+package com.example.qqbot.data.group;
 
 import lombok.Data;
 

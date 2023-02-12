@@ -2,7 +2,7 @@ package com.example.qqbot.Util;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.example.qqbot.data.DataGroup;
+import com.example.qqbot.data.group.DataGroup;
 import lombok.NonNull;
 
 /**

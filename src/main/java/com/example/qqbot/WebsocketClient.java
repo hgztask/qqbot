@@ -4,7 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.*;
-import com.example.qqbot.data.json.DataInvitedGroup;
+import com.example.qqbot.data.group.DataGroup;
+import com.example.qqbot.data.group.DataGroupDecrease;
+import com.example.qqbot.data.group.DataInvitedGroup;
 import com.example.qqbot.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
@@ -42,6 +44,7 @@ public class WebsocketClient {
                 public void onOpen(ServerHandshake handshakedata) {
                     log.info("[websocket] 连接成功");
                 }
+
                 @SuppressWarnings("all")
                 @Override
                 public void onMessage(String json) {
@@ -65,6 +68,7 @@ public class WebsocketClient {
                     } else if ("group_ban".equals(message.getNotice_type())) {
                         //群接禁言事件
                     } else if ("group_recall".equals(message.getNotice_type())) {
+                        log.info("群消息撤回=" + jsonObject.toStringPretty());
                         //群消息撤回
                     } else if ("friend_recall".equals(message.getNotice_type())) {
                         //私聊消息撤回
@@ -96,7 +100,7 @@ public class WebsocketClient {
 
                 @Override
                 public void onError(Exception ex) {
-                        log.info("[websocket] 连接错误={}", ex.getMessage());
+                    log.info("[websocket] 连接错误={}", ex.getMessage());
                 }
             };
             webSocketClient.connect();

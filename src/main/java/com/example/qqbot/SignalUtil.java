@@ -53,6 +53,12 @@ public class SignalUtil {
     @Getter
     private static final String PRIVATEENDPOINT = "/send_private_msg";
 
+
+    /**
+     * 发起撤回终结点
+     */
+    private static final String DELETE_MSG = "/delete_msg";
+
     /**
      * get发送消息请求
      *
@@ -70,7 +76,7 @@ public class SignalUtil {
         try {
             execute = data.execute();
         } catch (IOException e) {
-            System.out.println("请求execute时出错" + e.getMessage());
+            log.info("请求execute时出错" + e.getMessage());
             return JSONNULL;
         }
 
@@ -97,7 +103,7 @@ public class SignalUtil {
             execute = connection.execute();
             System.out.println(execute.url());
         } catch (IOException e) {
-            System.out.println("请求execute时出错" + e.getMessage());
+            log.info("请求execute时出错" + e.getMessage());
             return JSONNULL;
         }
         int code = execute.statusCode();
@@ -126,14 +132,14 @@ public class SignalUtil {
         try {
             execute = connection.execute();
         } catch (IOException e) {
-            System.out.println("请求execute时出错" + e.getMessage());
+            log.info("请求execute时出错" + e.getMessage());
             return JSONNULL;
         }
         int code;
         try {
             code = execute.statusCode();
         } catch (Exception e) {
-            System.out.println("请求状态码异常!" + e.getMessage());
+            log.info("请求状态码异常!" + e.getMessage());
             return JSONNULL;
         }
         if (code != 200) {
@@ -214,6 +220,17 @@ public class SignalUtil {
         data.put("user_id", user_id);
         data.put("message", message);
         return SignalUtil.httpGet(PRIVATEENDPOINT, data);
+    }
+
+
+    /**
+     * 撤回消息
+     *
+     * @param message_id 消息 ID
+     * @return 该 API 无响应数据
+     */
+    public static JSONObject deleteMsg(String message_id) {
+        return httpGet(DELETE_MSG, "?message_id=" + message_id);
     }
 
 }

@@ -1,6 +1,6 @@
 package com.example.qqbot.model;
 
-import com.example.qqbot.data.DataGroup;
+import com.example.qqbot.data.group.DataGroup;
 
 /**
  *

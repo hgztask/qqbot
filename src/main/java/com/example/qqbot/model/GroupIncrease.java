@@ -3,10 +3,9 @@ package com.example.qqbot.model;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.SignalUtil;
-import com.example.qqbot.data.DataGroupDecrease;
+import com.example.qqbot.data.group.DataGroupDecrease;
 import com.example.qqbot.face.GetTypeFace;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 

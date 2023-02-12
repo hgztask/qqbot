@@ -1,4 +1,4 @@
-package com.example.qqbot.data.json;
+package com.example.qqbot.data.group;
 
 import lombok.Data;
 

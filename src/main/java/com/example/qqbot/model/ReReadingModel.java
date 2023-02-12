@@ -4,7 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.SignalUtil;
-import com.example.qqbot.data.DataGroup;
+import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,6 +12,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 复读逻辑层
@@ -73,13 +74,13 @@ public class ReReadingModel implements Runnable {
      */
     public static void addReReadingMemberSet(DataGroup dataGroup, String userATID) {
         if (MEMBER_SET.contains(userATID)) {
-          SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该用户已经设置过了!");
+            SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该用户已经设置过了!");
             return;
         }
         MEMBER_SET.add(userATID);
         //修改本地文件
         FileUtil.writeUtf8String(JSONUtil.parseArray(MEMBER_SET).toStringPretty(), MEMBER_PATH_FILE);
-       SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), String.format("已将该成员%s设置为复读机对象", userATID));
+        SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), String.format("已将该成员%s设置为复读机对象", userATID));
     }
 
 
@@ -90,13 +91,13 @@ public class ReReadingModel implements Runnable {
      */
     public static void addKeySet(DataGroup dataGroup, String key) {
         if (KEY_SET.contains(key)) {
-        SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该关键词已经设置过了!");
+            SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "该关键词已经设置过了!");
             return;
         }
         KEY_SET.add(key);
         //修改本地文件
         FileUtil.writeUtf8String(JSONUtil.parseArray(KEY_SET).toStringPretty(), KEYPATH_FILE);
-       SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "已添加该关键词作为复读机触发条件=" + key);
+        SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "已添加该关键词作为复读机触发条件=" + key);
     }
 
 
@@ -181,9 +182,20 @@ public class ReReadingModel implements Runnable {
             return;
         }
         log.info("复读机请求成功!");
+        //消息id
+        String message_id = json.getByPath("data.message_id", String.class);
+        System.out.println(json);
+        log.info("获取到复读的消息id=" + message_id);
+            try {
+                TimeUnit.SECONDS.sleep(35);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        //每次复读完成之后根据上面的倒计时撤回消息
+        SignalUtil.deleteMsg(message_id);
+
+
     }
-
-
 
 
 }

@@ -1,12 +1,10 @@
 package com.example.qqbot.model;
 
-import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import com.example.qqbot.SignalUtil;
-import com.example.qqbot.data.DataGroup;
+import com.example.qqbot.data.group.DataGroup;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 
 /**
  * 每天60秒看世界逻辑层
