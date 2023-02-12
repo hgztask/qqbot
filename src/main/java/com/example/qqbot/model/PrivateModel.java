@@ -34,6 +34,11 @@ public class PrivateModel implements Runnable {
             //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
             ReReadingModel.readFileArraySetRE_READING_MEMBER_SET(user_id);
             return;
+        } else if (raw_message.startsWith("打印触发复读机关键词") && DataUserEights.SUPERUSER.contains(user_id)) { //需要超级用户权限
+            ReReadingModel.printKeySet(user_id);
+        } else if (raw_message.startsWith("打印复读机成员") && DataUserEights.SUPERUSER.contains(user_id)) {//需要超级用户权限
+            ReReadingModel.printReReadingMemberSet(user_id);
+            return;
         }
         //实现一个复读机
         HashMap<String, String> data = new HashMap<>();

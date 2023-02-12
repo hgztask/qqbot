@@ -64,7 +64,7 @@ public class GroupModel implements Runnable {
     public void run() {
         //获取到群聊对象里的QQ群号
         String group_id = dataGroup.getGroup_id();
-        List<String> re_reading_member_set = ReReadingModel.getRE_READING_MEMBER_SET();
+        List<String> re_reading_member_set = ReReadingModel.getMEMBER_SET();
         //过滤
         if (groupIDArray.contains(group_id)) {
             log.info(group_id + "群触发了黑名单了");
@@ -128,9 +128,6 @@ public class GroupModel implements Runnable {
             }
             ReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
             return;
-        } else if (raw_message.startsWith("打印复读机成员") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) {//需要超级用户权限
-            ReReadingModel.printReReadingMemberSet(dataGroup);
-            return;
         } else if (re_reading_member_set.contains(dataGroup.getUser_id())) {
             new ReReadingModel(dataGroup).run();
             return;
@@ -145,6 +142,13 @@ public class GroupModel implements Runnable {
 
     }
 
+
+    /**
+     * 判断数组里的符合元素的对象
+     * @param listContent 集合对象
+     * @param raw_message 关键对象
+     * @return
+     */
     private static boolean isContainsMessAge(List<String> listContent, String raw_message) {
         for (String s : listContent) {
             if (s.contains(raw_message)) {
