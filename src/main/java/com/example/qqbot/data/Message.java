@@ -52,6 +52,16 @@ public class Message {
      */
     private String group_id;
 
+    /**
+     *请求类型
+     */
+    private String request_type;
+
+    /**
+     * 上报类型
+     */
+    private String post_type;
+
 }
 
 

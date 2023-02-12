@@ -45,10 +45,5 @@ public class DataPrivate {
      */
     private Object sender;
 
-    /**
-     * 终结点
-     */
-    @Getter
-    private static final String ENDPOINT ="/send_private_msg";
 
 }

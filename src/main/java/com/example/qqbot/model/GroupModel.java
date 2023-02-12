@@ -1,23 +1,16 @@
 package com.example.qqbot.model;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.SignalUtil;
+import com.example.qqbot.Util.UserInfoUtil;
 import com.example.qqbot.data.DataGroup;
-import com.example.qqbot.data.DataLanZouYInfo;
-import com.example.qqbot.data.DataPrivate;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -54,9 +47,7 @@ public class GroupModel implements Runnable {
     /**
      * 黑名单群组
      */
-    private static final List<String> groupIDArray = ListUtil.toList("");
-
-
+    private static final List<String> groupIDArray = ListUtil.toList();
 
 
     /**
@@ -73,6 +64,7 @@ public class GroupModel implements Runnable {
     public void run() {
         //获取到群聊对象里的QQ群号
         String group_id = dataGroup.getGroup_id();
+        List<String> re_reading_member_set = ReReadingModel.getRE_READING_MEMBER_SET();
         //过滤
         if (groupIDArray.contains(group_id)) {
             log.info(group_id + "群触发了黑名单了");
@@ -84,7 +76,9 @@ public class GroupModel implements Runnable {
         HashMap<String, String> data = new HashMap<>();
         data.put("group_id", dataGroup.getGroup_id());
         JSONObject json = null;
-        if (raw_message.contains("发送合并转发")) {
+        if (raw_message.contains("获取艾特信息")) {
+            log.info("获取艾特信息");
+            log.info(jsonObject.toStringPretty());
             return;
         } else if (raw_message.contains("菜单")) {
             SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "菜单\n蓝奏云资源搜索=要搜索的资源");
@@ -119,15 +113,31 @@ public class GroupModel implements Runnable {
             }
             log.info("非超级用户尝试执行该模块但是被拒绝了");
             return;
-        } else {
-            new ReReadingModel(dataGroup).run();
-            if ("2978778354".equals(dataGroup.getUser_id())) {
-                //实现一个复读机
-                json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), raw_message);
-            } else {
+        } else if (raw_message.startsWith("添加复读机成员") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
+            //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
+            String userATID = UserInfoUtil.getUserATID(dataGroup);
+            if (userATID.isEmpty()) {
                 return;
             }
+            ReReadingModel.addReReadingMemberSet(dataGroup, userATID);
+            return;
+        } else if (raw_message.startsWith("移除复读机成员") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
+            String userATID = UserInfoUtil.getUserATID(dataGroup);
+            if (userATID.isEmpty()) {
+                return;
+            }
+            ReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
+            return;
+        } else if (raw_message.startsWith("打印复读机成员") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) {//需要超级用户权限
+            ReReadingModel.printReReadingMemberSet(dataGroup);
+            return;
+        } else if (re_reading_member_set.contains(dataGroup.getUser_id())) {
+            new ReReadingModel(dataGroup).run();
+            return;
+        } else {
+            return;
         }
+        //下面代码会影响后期模块调整,后面需要移除,在此基础上后面的代码不需要return
         if (json == null || json.isEmpty() || json.getByPath("retcode", int.class) != 0) {
             System.out.println("请求失败!!");
             return;

@@ -4,10 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.*;
-import com.example.qqbot.model.GroupDecrease;
-import com.example.qqbot.model.GroupIncrease;
-import com.example.qqbot.model.GroupModel;
-import com.example.qqbot.model.PrivateModel;
+import com.example.qqbot.data.json.DataInvitedGroup;
+import com.example.qqbot.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
@@ -83,6 +81,9 @@ public class WebsocketClient {
                         DataGroupDecrease dataGroupDecrease = BeanUtil.toBean(jsonObject, DataGroupDecrease.class);
                         new GroupDecrease(dataGroupDecrease).run();
                         log.info(dataGroupDecrease.getGroup_id() + "群的 " + dataGroupDecrease.getUser_id() + " 成员减少了");
+                    } else if ("group".equals(message.getRequest_type()) && "request".equals(message.getPost_type())) {
+                        //如果是加群请求/邀请的类型通知
+                        new InvitedGroupModel(BeanUtil.toBean(jsonObject, DataInvitedGroup.class)).run();
                     } else {
                         log.info("未登记状态信息");
                         System.out.println(jsonObject.toStringPretty());
@@ -96,7 +97,7 @@ public class WebsocketClient {
 
                 @Override
                 public void onError(Exception ex) {
-                    log.info("[websocket] 连接错误={}", ex.getMessage());
+                        log.info("[websocket] 连接错误={}", ex.getMessage());
                 }
             };
             webSocketClient.connect();

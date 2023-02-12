@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.SignalUtil;
 import com.example.qqbot.data.DataGroup;
+import com.example.qqbot.data.DataUserEights;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,7 +38,7 @@ public class ReReadingModel implements Runnable {
      * 指定要复读机的成员
      */
     @Getter
-    private static final List<String> RE_READING_MEMBER_SET = getFileJson(PATH_FILE);
+    private static List<String> RE_READING_MEMBER_SET = getFileJson(PATH_FILE);
 
     public ReReadingModel(DataGroup dataGroup) {
         this.dataGroup = dataGroup;
@@ -53,6 +54,7 @@ public class ReReadingModel implements Runnable {
             return new ArrayList<>(0);
         }
         List jsonArray = JSONUtil.readJSONArray(file, StandardCharsets.UTF_8);
+        System.out.println(jsonArray.toString());
         return new ArrayList<>(jsonArray);
     }
 
@@ -69,7 +71,7 @@ public class ReReadingModel implements Runnable {
         }
         RE_READING_MEMBER_SET.add(userATID);
         //修改本地文件
-        FileUtil.writeUtf8String(RE_READING_MEMBER_SET.toString(), PATH_FILE);
+        FileUtil.writeUtf8String(JSONUtil.parseArray(RE_READING_MEMBER_SET).toStringPretty(), PATH_FILE);
         JSONObject json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "已将该成员设置为复读机对象");
         if (json.isEmpty()) {
             log.info("设置要复读的人员功能模块-已将该成员设置对象-请求失败了");
@@ -77,6 +79,31 @@ public class ReReadingModel implements Runnable {
         }
         log.info("设置要复读的人员功能模块-已将该成员设置对象-请求成功!");
     }
+
+
+    /**
+     * 读取本地复读机成员对象并重新赋值给RE_READING_MEMBER_SET变量,相当于刷新了该变量的值
+     * 触发地点群聊
+     *
+     * @param dataGroup 群聊数据层
+     */
+    @SuppressWarnings("all")
+    public static void readFileArraySetRE_READING_MEMBER_SET(DataGroup dataGroup) {
+        RE_READING_MEMBER_SET = getFileJson(PATH_FILE);
+        SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "已读取本地复读机成员对象并刷新值");
+    }
+
+
+    /**
+     * 读取本地复读机成员对象并重新赋值给RE_READING_MEMBER_SET变量,相当于刷新了该变量的值
+     * 触发地点私聊
+     */
+    @SuppressWarnings("all")
+    public static void readFileArraySetRE_READING_MEMBER_SET(String user_id) {
+        RE_READING_MEMBER_SET = getFileJson(PATH_FILE);
+        SignalUtil.sendPrivateMessage(user_id, "已读取本地复读机成员对象并刷新值");
+    }
+
 
     /**
      * 指定删除的复读机成员对象
@@ -86,7 +113,7 @@ public class ReReadingModel implements Runnable {
     public static void removeReReadingMemberSet(DataGroup dataGroup, String userATID) {
         if (RE_READING_MEMBER_SET.remove(userATID)) {
             //修改本地文件
-            FileUtil.writeUtf8String(RE_READING_MEMBER_SET.toString(), PATH_FILE);
+            FileUtil.writeUtf8String(JSONUtil.parseArray(RE_READING_MEMBER_SET).toStringPretty(), PATH_FILE);
             if (SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "已将该对象移除至集合对象!").isEmpty()) {
                 log.info("指定删除的复读机成员对象-已将该对象移除至集合对象-请求成功!");
                 return;
@@ -117,7 +144,6 @@ public class ReReadingModel implements Runnable {
     @Override
     public void run() {
         String raw_message = dataGroup.getRaw_message();
-        String user_id = dataGroup.getUser_id();
         JSONObject json = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), raw_message);
         if (json.isEmpty()) {
             return;

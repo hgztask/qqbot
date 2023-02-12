@@ -15,6 +15,7 @@ import java.util.List;
 public class DataUserEights {
     /**
      * 超级用户权限
+     * 建议超级用户权限第一个是优先级最高的一个
      */
     public static final List<String> SUPERUSER = ListUtil.toList("2978778354");
 

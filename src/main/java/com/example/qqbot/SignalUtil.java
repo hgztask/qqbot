@@ -35,6 +35,24 @@ public class SignalUtil {
     @Getter
     private static final String GROUPENDPOINT = "/send_group_msg";
 
+
+    /**
+     * 获取群信息
+     */
+    private static final String GROUP_INFO_ENDPOINT = "/get_group_info";
+
+    /**
+     * 处理加群请求／邀请
+     */
+    private static final String SET_GROUP_ADD_REQUEST = "/set_group_add_request";
+
+
+    /**
+     * 发送私聊消息
+     */
+    @Getter
+    private static final String PRIVATEENDPOINT = "/send_private_msg";
+
     /**
      * get发送消息请求
      *
@@ -134,10 +152,68 @@ public class SignalUtil {
      * @return json对象结果
      */
     public static JSONObject sendGroupMessage(@NonNull String group_id, @NonNull String message) {
-        final Map<String, String> data = new HashMap<>();
+        final Map<String, String> data = new HashMap<>(2);
         data.put("group_id", group_id);
         data.put("message", message);
         return SignalUtil.httpGet(GROUPENDPOINT, data);
+    }
+
+
+    /**
+     * 获取群的信息
+     * 提示
+     * 如果机器人尚未加入群, group_create_time, group_level, max_member_count 和 member_count 将会为0
+     *
+     * @param group_id 群号
+     * @param no_cache 是否不使用缓存（使用缓存可能更新不及时, 但响应更快）
+     * @return json对象
+     */
+    public static JSONObject getGroupInfo(String group_id, boolean no_cache) {
+        HashMap<String, String> data = new HashMap<>(2);
+        data.put("group_id", group_id);
+        data.put("no_cache", String.valueOf(no_cache));
+        JSONObject jsonObject = SignalUtil.httpGet(GROUP_INFO_ENDPOINT, data);
+        if (jsonObject.isEmpty()) {
+            return JSONNULL;
+        }
+        Integer retcode = jsonObject.get("retcode", int.class);
+        if (retcode == null || retcode != 0) {
+            return JSONNULL;
+        }
+        return jsonObject;
+    }
+
+
+    /**
+     * 处理加群请求／邀请
+     * 该 API 无响应数据
+     *
+     * @param flag    加群请求的 flag（需从上报的数据中获得）
+     * @param type    add 或 invite, 请求类型（需要和上报消息中的 sub_type 字段相符）
+     * @param approve 是否同意请求／邀请,默认true
+     * @param reason  拒绝理由（仅在拒绝时有效）,需要传入一个具体的字符串,不可以为null
+     * @return json对象
+     */
+    public static JSONObject setGroupAddRequest(String flag, String type, boolean approve, @NonNull String reason) {
+        HashMap<String, String> data = new HashMap<>(4);
+        data.put("flag", flag);
+        data.put("type", type);
+        data.put("approve", String.valueOf(approve));
+        data.put("reason", reason);
+        return SignalUtil.httpGet(SET_GROUP_ADD_REQUEST, data);
+    }
+
+
+    /**
+     * 给用户私发消息
+     *
+     * @return
+     */
+    public static JSONObject sendPrivateMessage(String user_id, String message) {
+        HashMap<String, String> data = new HashMap<>(2);
+        data.put("user_id", user_id);
+        data.put("message", message);
+        return SignalUtil.httpGet(PRIVATEENDPOINT, data);
     }
 
 }
