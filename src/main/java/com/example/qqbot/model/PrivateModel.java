@@ -1,6 +1,7 @@
 package com.example.qqbot.model;
 
 import cn.hutool.json.JSONObject;
+import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataPrivate;
 import com.example.qqbot.data.DataUserEights;
@@ -50,11 +51,30 @@ public class PrivateModel implements Runnable {
             GroupModel.readFIlePathBlackList(user_id);
             return;
         }
-        if (raw_message.startsWith("打印接受推送消息的群聊集合") && boolSupeRuser) {
+        if (raw_message.startsWith("打印接受推送消息群聊集合") && boolSupeRuser) {
             ListeningGroupModel.printPushGather(user_id);
             return;
         }
-        //实现一个复读机
+        if (raw_message.startsWith("打印监听群聊集合") && boolSupeRuser) {
+            ListeningGroupModel.printlisteninggroupGather(user_id);
+            return;
+        }
+        if (raw_message.startsWith("打印指定群聊监听状态=") && boolSupeRuser) {
+            String group_id = InformationUtil.subEqual("=", raw_message);
+            if (group_id.isEmpty()) {
+                return;
+            }
+            ListeningGroupModel.printIslistening(group_id, user_id);
+            return;
+        }
+        if (raw_message.startsWith("打印指定群聊推送状态=") && boolSupeRuser) {
+            String group_id = InformationUtil.subEqual("=", raw_message);
+            if (group_id.isEmpty()) {
+                return;
+            }
+            ListeningGroupModel.printIsPush(group_id, user_id);
+        }
+
         HashMap<String, String> data = new HashMap<>();
         data.put("user_id", dataPrivate.getUser_id());
         data.put("message", message);
