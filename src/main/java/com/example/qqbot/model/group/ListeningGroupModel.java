@@ -1,15 +1,18 @@
 package com.example.qqbot.model.group;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Util.SignalUtil;
-import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.data.group.DataGroup;
+import com.example.qqbot.model.ReReadingModel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,11 +40,31 @@ public class ListeningGroupModel implements Runnable {
      */
     private static final Set<String> LISTENINGGROUPIDSET = new LinkedHashSet<>();
 
-
     /**
      * 推送消息的群聊
      */
     private static final Set<String> PUSHGROUPIDSET = new LinkedHashSet<>();
+
+    /**
+     * 黑名单群组
+     */
+    private static List<String> BLACKGROUPID = ListUtil.toList("");
+
+    /**
+     * 黑名单用户
+     * 该用户的信息不会推送
+     */
+    private static final List<String> BLACKUSERID = ListUtil.toList("2978778354", "3426359078", "202619505");
+
+    /**
+     * 一个群重复次数
+     */
+    private static int groupEqualIndex = 1;
+
+    /**
+     * 记录重复值
+     */
+    private static String groupEqualStr = "";
 
 
     static {
@@ -61,10 +84,23 @@ public class ListeningGroupModel implements Runnable {
         if (!(LISTENINGGROUPIDSET.contains(dataGroup.getGroup_id()))) {
             return;
         }
-        if ("202619505".equals(dataGroup.getUser_id())) {
-            //如果监听的群聊里触发该功能的包含了该成员.则不推送
+        String user_id = dataGroup.getUser_id();
+        String group_id = dataGroup.getGroup_id();
+        //判断是否有黑名单用户和黑名单群聊
+        if (BLACKUSERID.contains(user_id) || BLACKGROUPID.contains(group_id)) {
+            //包含在内的是不会执行推送消息的
+            log.info("触发了黑名单了操作了:ser_id=" + user_id + "\tgroup_id=" + group_id);
             return;
         }
+
+
+        if (isequlContent(dataGroup.getRaw_message())) {
+            //当连续有两条消息重复时不执行下面操作
+            return;
+        }
+
+
+        log.info("捕获到信息=" + JSONUtil.parseObj(dataGroup).toStringPretty());
 
         for (String pushGroupID : PUSHGROUPIDSET) {
             if (SignalUtil.sendGroupMessage(pushGroupID, dataGroup.getRaw_message()).isEmpty()) {
@@ -72,9 +108,31 @@ public class ListeningGroupModel implements Runnable {
                 return;
             }
             log.info("监听群聊推送消息成功!");
-
         }
+    }
 
+    /**
+     * 判断上一条消息是否和下一条消息一样,一样就返回true
+     * 反之false
+     * 该方法需要加锁,避免多条线程同时进行判断!
+     *
+     * @param raw_message 原始消息内容
+     * @return 是否一样布尔值
+     */
+    private synchronized static boolean isequlContent(String raw_message) {
+        //这里执行群聊消息判断与上一次内容是否相等
+        if (groupEqualStr.equals(raw_message)) {
+            groupEqualIndex++;
+            //如果相容的内容=>1次就不推送
+            if (groupEqualIndex >= 2) {
+                log.info("检测到连续消息大于或等于2次,故不推送消息!");
+                return true;
+            }//反之说明消息才出现1次
+        }
+        //不相等就记录对应的消息,也就是每次都会刷刷新上一条消息和刷新重复次数1次,已保证下次和上次的判断
+        groupEqualStr = raw_message;
+        groupEqualIndex = 1;
+        return false;
     }
 
 
@@ -230,5 +288,10 @@ public class ListeningGroupModel implements Runnable {
 
     }
 
-
 }
+
+
+
+
+
+

@@ -55,14 +55,17 @@ public class WebsocketClient {
                         new PrivateModel(dataPrivate).run();
                     } else if ("group".equals(message.getMessage_type())) {
                         //群聊消息
-                        //开两条线程
-                        ExecutorService threadPool = Executors.newFixedThreadPool(2);
+                        //开3条线程
+                        ExecutorService threadPool = Executors.newFixedThreadPool(3);
                         try {
                             ListeningGroupModel listeningGroupModel = ListeningGroupModel.getListeningGroupModel();
+                            Day60World day60World = Day60World.getDay60World();
                             DataGroup dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
                             listeningGroupModel.setDataGroup(dataGroup);
+                            day60World.setDataGroup(dataGroup);
                             threadPool.execute(listeningGroupModel);
                             threadPool.execute(new GroupModel(dataGroup, jsonObject));
+                            threadPool.execute(day60World);
                         } finally {
                             threadPool.shutdown();
                         }
@@ -81,6 +84,7 @@ public class WebsocketClient {
                         System.out.println(jsonObject.toStringPretty());
                     } else if ("group_increase".equals(message.getNotice_type())) {
                         //群成员增加
+                        ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
                         DataGroupDecrease dataGroupDecrease = BeanUtil.toBean(jsonObject, DataGroupDecrease.class);
                         new GroupIncreaseModel(dataGroupDecrease).run();
                         log.info(dataGroupDecrease.getGroup_id() + "群的 " + dataGroupDecrease.getUser_id() + " 成员增加了");

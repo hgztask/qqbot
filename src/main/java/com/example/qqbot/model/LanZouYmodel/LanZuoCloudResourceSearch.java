@@ -4,7 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.example.qqbot.SignalUtil;
+import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

@@ -14,7 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.*;
-import  com.example.qqbot.Util.InformationUtil;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import com.example.qqbot.Util.InformationUtil;
 
 /**
  * 群聊逻辑层
@@ -126,14 +129,14 @@ public class GroupModel implements Runnable {
             ReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
             return;
         } else if (raw_message.startsWith("添加触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
-            String key =  InformationUtil.subEqual("=", raw_message);
+            String key = InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
             ReReadingModel.addKeySet(dataGroup, key);
             return;
         } else if (raw_message.startsWith("移除触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
-            String key =  InformationUtil.subEqual("=", raw_message);
+            String key = InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
@@ -159,7 +162,21 @@ public class GroupModel implements Runnable {
             return;
         } else if (re_reading_member_set.contains(user_id) || GroupModel.keyContains(ReReadingModel.getKEY_SET(), filtrationCQ(raw_message))) {
             //复读模块
-            new ReReadingModel(dataGroup).run();
+            ReReadingModel re_reading_model = ReReadingModel.getRE_READING_MODEL();
+            re_reading_model.setDataGroup(dataGroup);
+            ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
+            try {
+                threadExecutor.execute(re_reading_model);
+            } finally {
+                threadExecutor.shutdown();
+            }
+            return;
+        } else if (raw_message.startsWith("执行demo") && boolSupeRuser) {
+            if (SignalUtil.set_group_whole_ban(group_id,true).isEmpty()) {
+            log.info("测试执行群聊禁言失败!");
+                return;
+            }
+            log.info("测试执行群聊禁言成功!");
             return;
         } else {
             return;
@@ -189,9 +206,6 @@ public class GroupModel implements Runnable {
         }
         return false;
     }
-
-
-
 
 
     /**

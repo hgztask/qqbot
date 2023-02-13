@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -27,7 +28,14 @@ public class ReReadingModel implements Runnable {
     /**
      * 群聊数据层
      */
+    @Setter
     private DataGroup dataGroup;
+
+    /**
+     * 单例对象
+     */
+    @Getter
+    private static final ReReadingModel RE_READING_MODEL = new ReReadingModel();
 
 
     /**
@@ -51,8 +59,19 @@ public class ReReadingModel implements Runnable {
     @Getter
     private static List<String> KEY_SET = getFileJson(KEYPATH_FILE);
 
-    public ReReadingModel(DataGroup dataGroup) {
-        this.dataGroup = dataGroup;
+
+    /**
+     * 记录重复值
+     */
+    private static String groupEqualStr = "";
+
+    /**
+     * 连续重复次数
+     */
+    private static int groupEqualIndex = 1;
+
+
+    private ReReadingModel() {
     }
 
     /**
@@ -66,6 +85,30 @@ public class ReReadingModel implements Runnable {
         }
         List jsonArray = JSONUtil.readJSONArray(file, StandardCharsets.UTF_8);
         return new ArrayList<>(jsonArray);
+    }
+
+    /**
+     * 判断上一条消息是否和下一条消息一样,一样就返回true
+     * 反之false
+     * 该方法需要加锁,避免多条线程同时进行判断!
+     *
+     * @param raw_message 原始消息内容
+     * @return 是否一样布尔值
+     */
+    private synchronized static boolean isequlContent(String raw_message) {
+        //这里执行群聊消息判断与上一次内容是否相等
+        if (groupEqualStr.equals(raw_message)) {
+            groupEqualIndex++;
+            //如果相容的内容=>1次就不推送
+            if (groupEqualIndex >= 2) {
+                log.info("检测到连续消息大于或等于2次,故不复读消息!");
+                return true;
+            }//反之说明消息才出现1次
+        }
+        //不相等就记录对应的消息,也就是每次都会刷刷新上一条消息和刷新重复次数1次,已保证下次和上次的判断
+        groupEqualStr = raw_message;
+        groupEqualIndex = 1;
+        return false;
     }
 
 
@@ -174,9 +217,16 @@ public class ReReadingModel implements Runnable {
 
     @Override
     public void run() {
+        if (dataGroup == null) {
+            throw new RuntimeException("dataGroup为Nul");
+        }
         String raw_message = dataGroup.getRaw_message();
         String group_id = dataGroup.getGroup_id();
 
+        if (isequlContent(raw_message)) {
+            //限制复读数量,连续达到指定数不会复读
+            return;
+        }
         JSONObject json = SignalUtil.sendGroupMessage(group_id, raw_message);
         if (json.isEmpty()) {
             return;
@@ -184,11 +234,11 @@ public class ReReadingModel implements Runnable {
         log.info("复读机请求成功!");
         //消息id
         String message_id = json.getByPath("data.message_id", String.class);
-            try {
-                TimeUnit.SECONDS.sleep(35);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            TimeUnit.SECONDS.sleep(35);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         //每次复读完成之后根据上面的倒计时撤回消息
         SignalUtil.deleteMsg(message_id);
 

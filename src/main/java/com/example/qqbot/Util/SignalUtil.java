@@ -64,6 +64,17 @@ public class SignalUtil {
      */
     private static final String DELETE_MSG = "/delete_msg";
 
+
+    /**
+     * 群禁言终结点
+     */
+    private static final String SET_GROUP_BAN = "/set_group_ban";
+
+    /**
+     * 群组全员禁言
+     */
+    private static final String SET_GROUP_WHOLE_BAN = "/set_group_whole_ban";
+
     /**
      * get发送消息请求
      *
@@ -106,7 +117,7 @@ public class SignalUtil {
         Connection.Response execute;
         try {
             execute = connection.execute();
-            System.out.println(execute.url());
+            System.out.println(execute.body());
         } catch (IOException e) {
             log.info("请求execute时出错" + e.getMessage());
             return JSONNULL;
@@ -251,5 +262,28 @@ public class SignalUtil {
         return SignalUtil.httpGet(SignalUtil.GET_MSG, "?message_id=" + message_id);
     }
 
+
+    /**
+     * 发起群指定成员禁言或接禁操作
+     *
+     * @param group_id 群号
+     * @param user_id  要禁言的QQ号
+     * @param duration 时间 禁言时长, 单位秒, 0 表示取消禁言
+     * @return 该 API 无响应数据
+     */
+    public static JSONObject setGroupBan(@NonNull String group_id, @NonNull String user_id, @NonNull int duration) {
+        return httpGet(SET_GROUP_BAN, "?group_id=" + group_id + "&user_id=" + user_id + "&duration=" + duration);
+    }
+
+    /**
+     * 群组全体禁言
+     *
+     * @param group_id 群号
+     * @param enable   是否禁言,默认true
+     * @return json响应体
+     */
+    public static JSONObject set_group_whole_ban(String group_id, boolean enable) {
+        return SignalUtil.httpGet(SET_GROUP_WHOLE_BAN, "?group_id=" + group_id + "&enable=" + enable);
+    }
 
 }
