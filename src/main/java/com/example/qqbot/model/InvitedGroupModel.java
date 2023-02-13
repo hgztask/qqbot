@@ -2,7 +2,7 @@ package com.example.qqbot.model;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
-import com.example.qqbot.SignalUtil;
+import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataInvitedGroup;
 import lombok.extern.slf4j.Slf4j;
 
