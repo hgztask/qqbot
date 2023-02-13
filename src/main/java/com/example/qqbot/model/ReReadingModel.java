@@ -3,6 +3,7 @@ package com.example.qqbot.model;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
@@ -11,8 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,6 +30,7 @@ public class ReReadingModel implements Runnable {
      */
     @Setter
     private DataGroup dataGroup;
+
 
     /**
      * 单例对象
@@ -51,13 +52,13 @@ public class ReReadingModel implements Runnable {
      * 复读机的成员集合
      */
     @Getter
-    private static List<String> MEMBER_SET = getFileJson(MEMBER_PATH_FILE);
+    private static Set<String> MEMBER_SET = getFileJson(MEMBER_PATH_FILE);
 
     /**
      * 自动触发复读机的关键词集合
      */
     @Getter
-    private static List<String> KEY_SET = getFileJson(KEYPATH_FILE);
+    private static Set<String> KEY_SET = getFileJson(KEYPATH_FILE);
 
 
     /**
@@ -79,12 +80,12 @@ public class ReReadingModel implements Runnable {
      *
      * @return arrayList对象
      */
-    public static ArrayList<String> getFileJson(File file) {
+    public static Set<String> getFileJson(File file) {
         if (!(file.isFile())) {
-            return new ArrayList<>(0);
+            return new LinkedHashSet<>();
         }
         List jsonArray = JSONUtil.readJSONArray(file, StandardCharsets.UTF_8);
-        return new ArrayList<>(jsonArray);
+        return new LinkedHashSet<>(jsonArray);
     }
 
     /**
@@ -227,6 +228,20 @@ public class ReReadingModel implements Runnable {
             //限制复读数量,连续达到指定数不会复读
             return;
         }
+
+        //先定义可能以后还会用到
+        JSONObject dataGroupJson = JSONUtil.parseObj(dataGroup);
+        List<String> messageTypeList = InformationUtil.getMessageType(dataGroupJson);
+        if (!(messageTypeList.isEmpty())) {
+            String type = messageTypeList.get(0);
+            if ("record".equals(type)) {
+                //复读时过滤语音的类型
+                log.info("检测到语音消息,暂时还没写好跟语音相关的内容,故放弃本轮推送消息");
+                return;
+            }
+        }
+        log.info("dataGroupJson=" + dataGroupJson.toStringPretty());
+
         JSONObject json = SignalUtil.sendGroupMessage(group_id, raw_message);
         if (json.isEmpty()) {
             return;

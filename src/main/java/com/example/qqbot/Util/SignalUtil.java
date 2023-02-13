@@ -191,18 +191,7 @@ public class SignalUtil {
      * @return json对象
      */
     public static JSONObject getGroupInfo(String group_id, boolean no_cache) {
-        HashMap<String, String> data = new HashMap<>(2);
-        data.put("group_id", group_id);
-        data.put("no_cache", String.valueOf(no_cache));
-        JSONObject jsonObject = SignalUtil.httpGet(GROUP_INFO_ENDPOINT, data);
-        if (jsonObject.isEmpty()) {
-            return JSONNULL;
-        }
-        Integer retcode = jsonObject.get("retcode", int.class);
-        if (retcode == null || retcode != 0) {
-            return JSONNULL;
-        }
-        return jsonObject;
+        return  httpGet(GROUP_INFO_ENDPOINT,"?group_id="+group_id+"&no_cache="+no_cache);
     }
 
 

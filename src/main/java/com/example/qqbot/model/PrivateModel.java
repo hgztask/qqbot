@@ -74,7 +74,12 @@ public class PrivateModel implements Runnable {
             }
             ListeningGroupModel.printIsPush(group_id, user_id);
         }
+        if (raw_message.startsWith("打印群聊黑名单")&&boolSupeRuser) {
+            GroupModel.printBlackGroup(user_id);
+            return;
+        }
 
+        //下面是复读私聊的
         HashMap<String, String> data = new HashMap<>();
         data.put("user_id", dataPrivate.getUser_id());
         data.put("message", message);

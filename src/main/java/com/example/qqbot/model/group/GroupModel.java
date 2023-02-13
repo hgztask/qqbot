@@ -1,14 +1,17 @@
 package com.example.qqbot.model.group;
 
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
 import com.example.qqbot.model.ReReadingModel;
+import com.example.qqbot.model.pgr.PGRModel;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,7 +42,7 @@ public class GroupModel implements Runnable {
     private JSONObject jsonObject;
 
     /**
-     * 黑名单
+     * 黑名单群聊
      */
     private static final File BLACK_PATHF_FILE = new File("E:\\黑名单群聊.json");
 
@@ -52,7 +55,7 @@ public class GroupModel implements Runnable {
     /**
      * 黑名单群组
      */
-    private static List<String> BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
+    private static Set<String> BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
 
 
     /**
@@ -60,8 +63,17 @@ public class GroupModel implements Runnable {
      */
     private static final List<String> PGR_CONSCIOUS_COLLOCATION = ListUtil.toList("意识共鸣", "共鸣什么", "共鸣啥", "共鸣选啥", "共鸣怎么选", "意识带什么", "共鸣选哪个", "共鸣选什么", "意识推荐", "什么意识", "武器共鸣", "配队", "意识技能", "带啥意识");
 
+
+    /**
+     * 记录群员最后一个发言者
+     * 用来判断该用户私发连续发送消息,达标则执行某些操作
+     * <p>
+     * <p>
+     * 可以分析,一个群里只有一个连续超多少消息的,
+     * 但多个群不同,所以用kv集合存储数据
+     */
     @SuppressWarnings("all")
-    private static final List<String> PGR_GUILDID = ListUtil.toList("公会id", "公会ID", "工会", "公会", "招人");
+    private static final Map<String, Integer> user_idEqul = new HashMap<>(0);
 
 
     @Override
@@ -71,49 +83,43 @@ public class GroupModel implements Runnable {
         String group_id = dataGroup.getGroup_id();
         //发言者QQ号
         String user_id = dataGroup.getUser_id();
-        List<String> re_reading_member_set = ReReadingModel.getMEMBER_SET();
+        Set<String> re_reading_member_set = ReReadingModel.getMEMBER_SET();
 
         //是否是超级用户发的消息
         boolean boolSupeRuser = DataUserEights.SUPERUSER.contains(user_id);
+
+        String raw_message = dataGroup.getRaw_message();
+        if (raw_message.startsWith("查询当前群聊黑名单状态") && boolSupeRuser) {
+            GroupModel.printIsBlackGroup(group_id);
+            return;
+        }
         //过滤
         if (BLACKGROUPID.contains(group_id)) {
             log.info(group_id + "群触发了黑名单了");
             return;
         }
-        String raw_message = dataGroup.getRaw_message();
         log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
         //实现触发某个关键词回复
-        HashMap<String, String> data = new HashMap<>();
-        data.put("group_id", dataGroup.getGroup_id());
-        JSONObject json = null;
-        if (raw_message.startsWith("获取艾特信息")) {
-            log.info("获取艾特信息");
-            log.info(jsonObject.toStringPretty());
-            return;
-        } else if (raw_message.startsWith("菜单")) {
+        if (raw_message.startsWith("菜单")) {
             SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "菜单\n蓝奏云资源搜索=要搜索的资源");
             return;
-        } else if (isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message)) {
-            //针对于发图片的类型,目前测试需要带上file参数,这个应该是必带,试了不带发不出去,例外图片如果是网络链接的最好是图片格式的那种,以此为戒
-            data.put("message", String.format("[CQ:at,qq=%s]意识推荐共鸣配队站位表\n" +
-                    "可用于角色意识搭配、意识共鸣、组队推荐\n" +
-                    "看不清的请放大加载原图\n[CQ:image,file=战双意识表,url=https://s1.ax1x.com/2023/01/18/pS3Iekq.png]", user_id));
-            json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
-        } else if (isContainsMessAge(PGR_GUILDID, raw_message)) {
-            data.put("message", String.format("[CQ:at,qq=%s]本群的公会\n" +
-                    "公会名：桐子酱的光剑\n" +
-                    "信标服公会ID：00008433\n" +
-                    "星火服公会ID：00009669\n" +
-                    "星火就是官服如官网下载taptap下载等，反之星标即渠道服，手机商店下载", user_id));
-            json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
-        } else if (raw_message.startsWith("蓝奏云资源搜索=") && boolSupeRuser) {
+        }
+        if (InformationUtil.isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message)) {
+            PGRModel.consciousnessPGRTable(group_id, user_id);
+        }
+        if (InformationUtil.isContainsMessAge(PGRModel.getPGR_GUILDID(), raw_message)) {
+            PGRModel.printPGRGuild(group_id, user_id);
+            return;
+        }
+        if (raw_message.startsWith("蓝奏云资源搜索=") && boolSupeRuser) {
             String key = InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
             new LanZuoCloudResourceSearch(key, dataGroup).run();
             return;
-        } else if (raw_message.startsWith("添加复读机成员") && boolSupeRuser) { //需要超级用户权限
+        }
+        if (raw_message.startsWith("添加复读机成员") && boolSupeRuser) { //需要超级用户权限
             //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
             String userATID = InformationUtil.getUserATID(dataGroup);
             if (userATID.isEmpty()) {
@@ -121,46 +127,65 @@ public class GroupModel implements Runnable {
             }
             ReReadingModel.addReReadingMemberSet(dataGroup, userATID);
             return;
-        } else if (raw_message.startsWith("移除复读机成员") && boolSupeRuser) { //需要超级用户权限
+        }
+        if (raw_message.startsWith("移除复读机成员") && boolSupeRuser) { //需要超级用户权限
             String userATID = InformationUtil.getUserATID(dataGroup);
             if (userATID.isEmpty()) {
                 return;
             }
             ReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
             return;
-        } else if (raw_message.startsWith("添加触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
+        }
+        if (raw_message.startsWith("添加触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
             String key = InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
             ReReadingModel.addKeySet(dataGroup, key);
             return;
-        } else if (raw_message.startsWith("移除触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
+        }
+        if (raw_message.startsWith("移除触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
             String key = InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
             ReReadingModel.removeKeySet(dataGroup, key);
             return;
-        } else if (raw_message.startsWith("标记当前群聊监听状态") && boolSupeRuser) {
+        }
+        if (raw_message.startsWith("标记当前群聊监听状态") && boolSupeRuser) {
             ListeningGroupModel.addlisteninggroupGather(group_id);
             return;
-        } else if (raw_message.startsWith("标记当前群聊推送状态") && boolSupeRuser) {
+        }
+        if (raw_message.startsWith("标记当前群聊推送状态") && boolSupeRuser) {
             ListeningGroupModel.addPoshGroupGather(group_id);
             return;
-        } else if (raw_message.startsWith("取消当前群聊监听状态") && boolSupeRuser) {
+        }
+        if (raw_message.startsWith("取消当前群聊监听状态") && boolSupeRuser) {
             ListeningGroupModel.removelisteninggroupGather(group_id);
             return;
-        } else if (raw_message.startsWith("取消当前群聊推送状态") && boolSupeRuser) {
+        }
+        if (raw_message.startsWith("取消当前群聊推送状态") && boolSupeRuser) {
             ListeningGroupModel.removePoshGroupGather(group_id);
             return;
-        } else if (raw_message.startsWith("查询当前群聊监听状态") && boolSupeRuser) {
+        }
+        if (raw_message.startsWith("查询当前群聊监听状态") && boolSupeRuser) {
             ListeningGroupModel.printIslistening(group_id);
             return;
-        } else if (raw_message.startsWith("查询当前群聊推送状态") && boolSupeRuser) {
+        }
+        if (raw_message.startsWith("查询当前群聊推送状态") && boolSupeRuser) {
             ListeningGroupModel.printIsPush(group_id);
             return;
-        } else if (re_reading_member_set.contains(user_id) || GroupModel.keyContains(ReReadingModel.getKEY_SET(), filtrationCQ(raw_message))) {
+        }
+        if (raw_message.startsWith("标记当前群聊黑名单状态") && boolSupeRuser) {
+            addBlackGroup(group_id);
+            return;
+        }
+        if (raw_message.startsWith("取消当前群聊黑名单状态") && boolSupeRuser) {
+            removeBlackGroup(group_id);
+            return;
+        }
+
+        if (re_reading_member_set.contains(user_id) || InformationUtil.keyContains(ReReadingModel.getKEY_SET(), filtrationCQ(raw_message))) {
             //复读模块
             ReReadingModel re_reading_model = ReReadingModel.getRE_READING_MODEL();
             re_reading_model.setDataGroup(dataGroup);
@@ -171,62 +196,17 @@ public class GroupModel implements Runnable {
                 threadExecutor.shutdown();
             }
             return;
-        } else if (raw_message.startsWith("执行demo") && boolSupeRuser) {
-            if (SignalUtil.set_group_whole_ban(group_id,true).isEmpty()) {
-            log.info("测试执行群聊禁言失败!");
+        }
+        if (raw_message.startsWith("执行demo") && boolSupeRuser) {
+            if (SignalUtil.set_group_whole_ban(group_id, true).isEmpty()) {
+                log.info("测试执行群聊禁言失败!");
                 return;
             }
             log.info("测试执行群聊禁言成功!");
             return;
-        } else {
-            return;
         }
-        //下面代码会影响后期模块调整,后面需要移除,在此基础上后面的代码不需要return
-        if (json == null || json.isEmpty() || json.getByPath("retcode", int.class) != 0) {
-            System.out.println("请求失败!!");
-            return;
-        }
-
     }
 
-
-    /**
-     * 判断数组里的符合元素的对象
-     *
-     * @param listContent 集合对象
-     * @param raw_message 关键对象
-     * @return
-     */
-    @SuppressWarnings("all")
-    private static boolean isContainsMessAge(List<String> listContent, String raw_message) {
-        for (String s : listContent) {
-            if (s.contains(raw_message)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    /**
-     * 遍历集合对象中key与content是否是包含关系
-     * 比如:集合内有key=舞台,content=物天空下起下午,舞台开始了,那么key是content的其中的一部分
-     *
-     * @param list    集合
-     * @param content 关键词
-     * @return 布尔值
-     */
-    public static boolean keyContains(List<String> list, String content) {
-        if (content.isEmpty()) {
-            return false;
-        }
-        for (String key : list) {
-            if (content.contains(key)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * 过滤消息中的CQ码,如头部[CQ:我是CQ的内容]尾部
@@ -258,6 +238,61 @@ public class GroupModel implements Runnable {
         BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
         SignalUtil.sendPrivateMessage(user_id, "已刷新黑名单群聊数据并重新赋值!");
     }
+
+    /**
+     * 添加指定群为黑名单
+     *
+     * @param group_id 群号
+     */
+    public static void addBlackGroup(String group_id) {
+        if (BLACKGROUPID.contains(group_id)) {
+            SignalUtil.sendGroupMessage(group_id, "当前群已存在黑名单中!");
+            return;
+        }
+        BLACKGROUPID.add(group_id);
+        FileUtil.writeUtf8String(JSONUtil.parseArray(BLACKGROUPID).toStringPretty(), BLACK_PATHF_FILE);
+        SignalUtil.sendGroupMessage(group_id, "当前群已添加进去黑名单!");
+    }
+
+    /**
+     * 从黑名单群聊中移除指定群聊
+     *
+     * @param group_id 群号
+     */
+    public static void removeBlackGroup(String group_id) {
+        if (BLACKGROUPID.remove(group_id)) {
+            FileUtil.writeUtf8String(JSONUtil.parseArray(BLACKGROUPID).toStringPretty(), BLACK_PATHF_FILE);
+            SignalUtil.sendGroupMessage(group_id, "当前群已从黑名单移除!");
+            return;
+        }
+        SignalUtil.sendGroupMessage(group_id, "移除失败!,当前群并未在黑名单里!");
+    }
+
+    /**
+     * 打印黑名单群聊
+     *
+     * @param user_id 发送给用户
+     */
+    public static void printBlackGroup(String user_id) {
+        SignalUtil.sendPrivateMessage(user_id, "黑名单群聊:" + JSONUtil.parseArray(BLACKGROUPID).toStringPretty());
+    }
+
+    /**
+     * 打印当前群聊是否是黑名单群聊
+     * 需要注意的是,该级别优先级要高于判断黑名单组!
+     *
+     * @param group_id
+     * @return
+     */
+    public static boolean printIsBlackGroup(String group_id) {
+        if (BLACKGROUPID.contains(group_id)) {
+            SignalUtil.sendGroupMessage(group_id, "当前群聊黑名单状态=true");
+            return true;
+        }
+        SignalUtil.sendGroupMessage(group_id, "当前群聊黑名单状态=true");
+        return false;
+    }
+
 
 }
 

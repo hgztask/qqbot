@@ -5,11 +5,9 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataGroup;
-import com.example.qqbot.model.ReReadingModel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -19,7 +17,7 @@ import java.util.Set;
  * 监听群消息
  * <p>
  * 功能
- * 监听指定群聊的消息,当有更新时.将对应的消息原封不动通过机器人推送到指定的推送全
+ * 监听指定群聊的消息,当有更新时.将对应的消息原封不动通过机器人推送到指定的推送群
  *
  * @author byhgz
  * @version 1.0
@@ -86,6 +84,7 @@ public class ListeningGroupModel implements Runnable {
         }
         String user_id = dataGroup.getUser_id();
         String group_id = dataGroup.getGroup_id();
+        String raw_message = dataGroup.getRaw_message();
         //判断是否有黑名单用户和黑名单群聊
         if (BLACKUSERID.contains(user_id) || BLACKGROUPID.contains(group_id)) {
             //包含在内的是不会执行推送消息的
@@ -93,17 +92,17 @@ public class ListeningGroupModel implements Runnable {
             return;
         }
 
-
-        if (isequlContent(dataGroup.getRaw_message())) {
+        if (isequlContent(raw_message)) {
             //当连续有两条消息重复时不执行下面操作
             return;
         }
 
+        log.info("raw_message=" + raw_message);
+        System.out.println("============================");
 
-        log.info("捕获到信息=" + JSONUtil.parseObj(dataGroup).toStringPretty());
 
         for (String pushGroupID : PUSHGROUPIDSET) {
-            if (SignalUtil.sendGroupMessage(pushGroupID, dataGroup.getRaw_message()).isEmpty()) {
+            if (SignalUtil.sendGroupMessage(pushGroupID, raw_message).isEmpty()) {
                 log.info("监听群聊推送消息失败!");
                 return;
             }

@@ -86,7 +86,6 @@ public class Day60World implements Runnable {
         int dateDAY_of_month = InformationUtil.getDateDAY_OF_MONTH();
         //群号
         String group_id = dataGroup.getGroup_id();
-        System.out.println(group_id);
 
         Set<String> keySet = dataTime.keySet();
         //如果集合里有登记的群聊,则判断集合内的更新日期
