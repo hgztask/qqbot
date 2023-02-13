@@ -1,18 +1,20 @@
-package com.example.qqbot.model;
+package com.example.qqbot.model.group;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
-import com.example.qqbot.SignalUtil;
-import com.example.qqbot.Util.UserInfoUtil;
+import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
+import com.example.qqbot.model.ReReadingModel;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.util.*;
+import  com.example.qqbot.Util.InformationUtil;
 
 /**
  * 群聊逻辑层
@@ -37,6 +39,7 @@ public class GroupModel implements Runnable {
      * 黑名单
      */
     private static final File BLACK_PATHF_FILE = new File("E:\\黑名单群聊.json");
+
 
     public GroupModel(DataGroup dataGroup, JSONObject jsonObject) {
         this.dataGroup = dataGroup;
@@ -63,7 +66,12 @@ public class GroupModel implements Runnable {
     public void run() {
         //获取到群聊对象里的QQ群号
         String group_id = dataGroup.getGroup_id();
+        //发言者QQ号
+        String user_id = dataGroup.getUser_id();
         List<String> re_reading_member_set = ReReadingModel.getMEMBER_SET();
+
+        //是否是超级用户发的消息
+        boolean boolSupeRuser = DataUserEights.SUPERUSER.contains(user_id);
         //过滤
         if (BLACKGROUPID.contains(group_id)) {
             log.info(group_id + "群触发了黑名单了");
@@ -71,69 +79,85 @@ public class GroupModel implements Runnable {
         }
         String raw_message = dataGroup.getRaw_message();
         log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
-
-
         //实现触发某个关键词回复
         HashMap<String, String> data = new HashMap<>();
         data.put("group_id", dataGroup.getGroup_id());
         JSONObject json = null;
-        if (raw_message.contains("获取艾特信息")) {
+        if (raw_message.startsWith("获取艾特信息")) {
             log.info("获取艾特信息");
             log.info(jsonObject.toStringPretty());
             return;
-        } else if (raw_message.contains("菜单")) {
+        } else if (raw_message.startsWith("菜单")) {
             SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "菜单\n蓝奏云资源搜索=要搜索的资源");
             return;
         } else if (isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message)) {
             //针对于发图片的类型,目前测试需要带上file参数,这个应该是必带,试了不带发不出去,例外图片如果是网络链接的最好是图片格式的那种,以此为戒
             data.put("message", String.format("[CQ:at,qq=%s]意识推荐共鸣配队站位表\n" +
                     "可用于角色意识搭配、意识共鸣、组队推荐\n" +
-                    "看不清的请放大加载原图\n[CQ:image,file=战双意识表,url=https://s1.ax1x.com/2023/01/18/pS3Iekq.png]", dataGroup.getUser_id()));
+                    "看不清的请放大加载原图\n[CQ:image,file=战双意识表,url=https://s1.ax1x.com/2023/01/18/pS3Iekq.png]", user_id));
             json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
         } else if (isContainsMessAge(PGR_GUILDID, raw_message)) {
             data.put("message", String.format("[CQ:at,qq=%s]本群的公会\n" +
                     "公会名：桐子酱的光剑\n" +
                     "信标服公会ID：00008433\n" +
                     "星火服公会ID：00009669\n" +
-                    "星火就是官服如官网下载taptap下载等，反之星标即渠道服，手机商店下载", dataGroup.getUser_id()));
+                    "星火就是官服如官网下载taptap下载等，反之星标即渠道服，手机商店下载", user_id));
             json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
-        } else if (raw_message.startsWith("蓝奏云资源搜索=") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) {
-            String key = subEqual("=", raw_message);
+        } else if (raw_message.startsWith("蓝奏云资源搜索=") && boolSupeRuser) {
+            String key = InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
             new LanZuoCloudResourceSearch(key, dataGroup).run();
             return;
-        } else if (raw_message.startsWith("添加复读机成员") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
+        } else if (raw_message.startsWith("添加复读机成员") && boolSupeRuser) { //需要超级用户权限
             //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
-            String userATID = UserInfoUtil.getUserATID(dataGroup);
+            String userATID = InformationUtil.getUserATID(dataGroup);
             if (userATID.isEmpty()) {
                 return;
             }
             ReReadingModel.addReReadingMemberSet(dataGroup, userATID);
             return;
-        } else if (raw_message.startsWith("移除复读机成员") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
-            String userATID = UserInfoUtil.getUserATID(dataGroup);
+        } else if (raw_message.startsWith("移除复读机成员") && boolSupeRuser) { //需要超级用户权限
+            String userATID = InformationUtil.getUserATID(dataGroup);
             if (userATID.isEmpty()) {
                 return;
             }
             ReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
             return;
-        } else if (raw_message.startsWith("添加触发复读机关键词=") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
-            String key = subEqual("=", raw_message);
+        } else if (raw_message.startsWith("添加触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
+            String key =  InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
             ReReadingModel.addKeySet(dataGroup, key);
             return;
-        } else if (raw_message.startsWith("移除触发复读机关键词=") && DataUserEights.SUPERUSER.contains(dataGroup.getUser_id())) { //需要超级用户权限
-            String key = subEqual("=", raw_message);
+        } else if (raw_message.startsWith("移除触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
+            String key =  InformationUtil.subEqual("=", raw_message);
             if (key.isEmpty()) {
                 return;
             }
             ReReadingModel.removeKeySet(dataGroup, key);
             return;
-        } else if (re_reading_member_set.contains(dataGroup.getUser_id()) || GroupModel.keyContains(ReReadingModel.getKEY_SET(), filtrationCQ(raw_message))) {
+        } else if (raw_message.startsWith("标记当前群聊监听状态") && boolSupeRuser) {
+            ListeningGroupModel.addlisteninggroupGather(group_id);
+            return;
+        } else if (raw_message.startsWith("标记当前群聊推送状态") && boolSupeRuser) {
+            ListeningGroupModel.addPoshGroupGather(group_id);
+            return;
+        } else if (raw_message.startsWith("取消当前群聊监听状态") && boolSupeRuser) {
+            ListeningGroupModel.removelisteninggroupGather(group_id);
+            return;
+        } else if (raw_message.startsWith("取消当前群聊推送状态") && boolSupeRuser) {
+            ListeningGroupModel.removePoshGroupGather(group_id);
+            return;
+        } else if (raw_message.startsWith("查询当前群聊监听状态") && boolSupeRuser) {
+            ListeningGroupModel.printIslistening(group_id);
+            return;
+        } else if (raw_message.startsWith("查询当前群聊推送状态") && boolSupeRuser) {
+            ListeningGroupModel.printIsPush(group_id);
+            return;
+        } else if (re_reading_member_set.contains(user_id) || GroupModel.keyContains(ReReadingModel.getKEY_SET(), filtrationCQ(raw_message))) {
             //复读模块
             new ReReadingModel(dataGroup).run();
             return;
@@ -166,43 +190,8 @@ public class GroupModel implements Runnable {
         return false;
     }
 
-    /**
-     * 获取指定关键词后面的内容
-     * 且关键词是最靠前的那一个
-     * 如果截取不到或者就是字符串开头第一个则返回空的字符串
-     *
-     * @param key 关键词
-     * @param str 字符串
-     * @return 截取之后的内容
-     */
-    public static String subEqual(String key, String str) {
-        int i = str.indexOf(key);
-        if (i == -1 || i == 0) {
-            return "";
-        }
-        str = str.substring(i + 1).trim();
 
-        return str;
-    }
 
-    /**
-     * 获取指定关键词后面的内容
-     * 且关键词是最靠前后的那一个
-     * 如果截取不到或者就是字符串开头第一个则返回空的字符串
-     *
-     * @param key 关键词
-     * @param str 内容
-     * @return 截取之后的内容
-     */
-    public static String lastSubEqual(String key, String str) {
-        int i = str.lastIndexOf(key);
-        if (i == -1 || i == 0) {
-            return "";
-        }
-        str = str.substring(i + 1).trim();
-
-        return str;
-    }
 
 
     /**
@@ -229,7 +218,8 @@ public class GroupModel implements Runnable {
      * 过滤消息中的CQ码,如头部[CQ:我是CQ的内容]尾部
      * 过滤之后=头部尾部
      * 如果过滤之后还是跟原来的一样,就返回原来的字符串
-     *去除字符串中[CQ:....]中的CQ内容
+     * 去除字符串中[CQ:....]中的CQ内容
+     *
      * @param content 要过滤的字符串
      * @return 过滤之后的结果
      */
