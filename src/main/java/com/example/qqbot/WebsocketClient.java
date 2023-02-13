@@ -6,8 +6,10 @@ import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.*;
 import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.group.DataGroupDecrease;
+import com.example.qqbot.data.group.DataGroupRecall;
 import com.example.qqbot.data.group.DataInvitedGroup;
 import com.example.qqbot.model.*;
+import com.example.qqbot.model.group.*;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
@@ -16,6 +18,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author byhgz
@@ -25,16 +29,6 @@ import java.net.URI;
 @Slf4j
 @Component
 public class WebsocketClient {
-
-    /**
-     * 发送消息方法
-     *
-     * @param json json内容
-     */
-    public static void sendMessage(String json) {
-
-    }
-
 
     @Bean
     public WebSocketClient webSocketClient() {
@@ -61,14 +55,25 @@ public class WebsocketClient {
                         new PrivateModel(dataPrivate).run();
                     } else if ("group".equals(message.getMessage_type())) {
                         //群聊消息
-                        DataGroup dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
-                        new GroupModel(dataGroup, jsonObject).run();
+                        //开两条线程
+                        ExecutorService threadPool = Executors.newFixedThreadPool(2);
+                        try {
+                            ListeningGroupModel listeningGroupModel = ListeningGroupModel.getListeningGroupModel();
+                            DataGroup dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
+                            listeningGroupModel.setDataGroup(dataGroup);
+                            threadPool.execute(listeningGroupModel);
+                            threadPool.execute(new GroupModel(dataGroup, jsonObject));
+                        } finally {
+                            threadPool.shutdown();
+                        }
                         //log.info("群聊消息=" + jsonObject.toStringPretty());
                         //log.info("群聊消息 " + dataGroup.toString());
                     } else if ("group_ban".equals(message.getNotice_type())) {
                         //群接禁言事件
                     } else if ("group_recall".equals(message.getNotice_type())) {
-                        log.info("群消息撤回=" + jsonObject.toStringPretty());
+                        DataGroupRecall dataGroupRecall = BeanUtil.toBean(jsonObject, DataGroupRecall.class);
+                        System.out.println(jsonObject.toStringPretty());
+                        new GroupRecallModel(dataGroupRecall).run();
                         //群消息撤回
                     } else if ("friend_recall".equals(message.getNotice_type())) {
                         //私聊消息撤回
@@ -77,12 +82,12 @@ public class WebsocketClient {
                     } else if ("group_increase".equals(message.getNotice_type())) {
                         //群成员增加
                         DataGroupDecrease dataGroupDecrease = BeanUtil.toBean(jsonObject, DataGroupDecrease.class);
-                        new GroupIncrease(dataGroupDecrease).run();
+                        new GroupIncreaseModel(dataGroupDecrease).run();
                         log.info(dataGroupDecrease.getGroup_id() + "群的 " + dataGroupDecrease.getUser_id() + " 成员增加了");
                     } else if ("group_decrease".equals(message.getNotice_type())) {
                         //群成员减少
                         DataGroupDecrease dataGroupDecrease = BeanUtil.toBean(jsonObject, DataGroupDecrease.class);
-                        new GroupDecrease(dataGroupDecrease).run();
+                        new GroupDecreaseModel(dataGroupDecrease).run();
                         log.info(dataGroupDecrease.getGroup_id() + "群的 " + dataGroupDecrease.getUser_id() + " 成员减少了");
                     } else if ("group".equals(message.getRequest_type()) && "request".equals(message.getPost_type())) {
                         //如果是加群请求/邀请的类型通知
@@ -110,6 +115,5 @@ public class WebsocketClient {
         }
         return null;
     }
-
 
 }
