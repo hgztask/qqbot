@@ -1,7 +1,7 @@
 package com.example.qqbot.model;
 
 import cn.hutool.core.date.DateUtil;
-import com.example.qqbot.SignalUtil;
+import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
