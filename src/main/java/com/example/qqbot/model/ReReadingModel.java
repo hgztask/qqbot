@@ -3,7 +3,7 @@ package com.example.qqbot.model;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.example.qqbot.SignalUtil;
+import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -137,7 +137,7 @@ public class ReReadingModel implements Runnable {
      * 触发地点私聊
      */
     @SuppressWarnings("all")
-    public static void readFileArraySetRE_READING_MEMBER_SET(String user_id) {
+    public static void readfilearraysetre_reading_member_set(String user_id) {
         MEMBER_SET = getFileJson(MEMBER_PATH_FILE);
         SignalUtil.sendPrivateMessage(user_id, "已读取本地复读机成员对象并刷新值");
     }
@@ -184,8 +184,6 @@ public class ReReadingModel implements Runnable {
         log.info("复读机请求成功!");
         //消息id
         String message_id = json.getByPath("data.message_id", String.class);
-        System.out.println(json);
-        log.info("获取到复读的消息id=" + message_id);
             try {
                 TimeUnit.SECONDS.sleep(35);
             } catch (InterruptedException e) {
