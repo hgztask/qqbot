@@ -1,9 +1,12 @@
 package com.example.qqbot.Util;
 
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.NonNull;
+import org.junit.jupiter.api.Test;
 
 /**
  * 信息处理
@@ -38,13 +41,13 @@ public class InformationUtil {
 
     /**
      * 责获取被艾特方的QQ号码
-     * @param dataGroup  dataGroup对象
+     *
+     * @param dataGroup dataGroup对象
      * @return 返回QQ号字符串或者空的字符串
      */
     public static @NonNull String getUserATID(@NonNull DataGroup dataGroup) {
         return InformationUtil.getUserATID(JSONUtil.parseObj(dataGroup));
     }
-
 
 
     /**
@@ -84,6 +87,15 @@ public class InformationUtil {
         return str;
     }
 
+
+    /**
+     * 获取当前时间的日,比如今天是1月5日,即获取到5
+     *
+     * @return 日
+     */
+    public static int getDateDAY_OF_MONTH() {
+        return DateUtil.date().getField(DateField.DAY_OF_MONTH);
+    }
 
 
 }
