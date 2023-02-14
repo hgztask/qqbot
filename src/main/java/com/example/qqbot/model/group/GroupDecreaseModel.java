@@ -2,6 +2,7 @@ package com.example.qqbot.model.group;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
@@ -45,6 +46,18 @@ public class GroupDecreaseModel implements Runnable, GetTypeFace, IMessageEvent 
         };
     }
 
+    /**
+     * 获取操作者对象是谁,是用户自己还是管理员等
+     *
+     * @return 字符串
+     */
+    private String getOperationObject(String user_id, String operator_id) {
+        if (user_id.equals(operator_id)) {
+            return "成员自己";
+        }
+        return operator_id;
+    }
+
 
     @Override
     public void run() {
@@ -62,20 +75,22 @@ public class GroupDecreaseModel implements Runnable, GetTypeFace, IMessageEvent 
         String sub_type = dataGroupDecrease.getSub_type();
         //操作者 QQ 号 ( 如果是主动退群, 则和 user_id 相同 )
         String operator_id = dataGroupDecrease.getOperator_id();
+        log.info("操作对象:" + operator_id);
         long time = dataGroupDecrease.getTime() * 1000;
 
         data.put("group_id", dataGroupDecrease.getGroup_id());
-        data.put("message",
-                String.format("%s成员退出群了:\n操作对象:%s\n事件类型:%s\n事件:%s",
-                        user_id, operator_id, getType(sub_type),
-                        DateUtil.date(time))
-        );
+        data.put("message", CharSequenceUtil.format("[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk={}&s=640]\n" +
+                        "{}成员退出群了\n" +
+                        "操作对象:{}\n" +
+                        "事件类型:{}\n" +
+                        "时间:{}",
+                user_id, user_id, getOperationObject(user_id, operator_id), getType(sub_type), DateUtil.date(time)));
         JSONObject json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
         if (json.isEmpty()) {
-            System.out.println("发送群消息失败了" + json);
+            log.info("发送群消息失败了" + json);
             return;
         }
-        System.out.println("发送消息成功!");
+        log.info("发送消息成功!");
 
     }
 

@@ -2,6 +2,8 @@ package com.example.qqbot.Util;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.group.DataGroup;
@@ -45,7 +47,7 @@ public class InformationUtil {
     }
 
     /**
-     * 责获取被艾特方的QQ号码
+     * 取被艾特方的QQ号码
      *
      * @param dataGroup dataGroup对象
      * @return 返回QQ号字符串或者空的字符串
@@ -145,33 +147,50 @@ public class InformationUtil {
 
 
     /**
-     * 获取消息中的类型参数
-     * 如果获取不到返回空列表,反之对应类型
+     * 过滤消息中的CQ码,如头部[CQ:我是CQ的内容]尾部
+     * 过滤之后=头部尾部
+     * 如果过滤之后还是跟原来的一样,就返回原来的字符串
+     * 去除字符串中[CQ:....]中的CQ内容
      *
-     * @param jsonObject 消息的json对象
-     * @return 返回类型的集合
+     * @param content 要过滤的字符串
+     * @return 过滤之后的结果
      */
-    public static List<String> getMessageType(@NonNull JSONObject jsonObject) {
-        List<String> listNull = new ArrayList<>(0);
-        System.out.println(jsonObject.toStringPretty());
-        //获取该消息中包含的类型
-        List<String> temp = jsonObject.getByPath("message", List.class);
-        if (temp == null || temp.isEmpty()) {
-            return listNull;
+    public static String filtrationCQ(@NonNull String content) {
+        String str = content.replaceAll("(\\[CQ:).*?(\\])", "");
+        if (str.isEmpty()) {
+            return "";
         }
-        ArrayList<String> typeList = new ArrayList<>(5);
-        for (String tempType : temp) {
-            String type = JSONUtil.parseObj(tempType).get("type",String.class);
-            if (type==null||type.isEmpty()) {
-                continue;
-            }
-            typeList.add(type);
+        if (str.equals(content)) {
+            return content;
         }
-        return typeList;
+        return str;
     }
 
 
+    /**
+     * 获取中消息内容中的json类型的类型列表
+     *
+     * @param messageJsonArray 消息内容(非原始内容,而是json)
+     * @return 类型列表
+     */
+    public static List<String> getMessageType(JSONArray messageJsonArray) {
+        return messageJsonArray.getByPath("type", List.class);
+    }
 
+    /**
+     * 判断消息是否是语音类型
+     * @param messageJsonArray json消息内容中的类型列表
+     * @return 是否是
+     */
+    public static boolean isMessageTypeRecord(JSONArray messageJsonArray) {
+        List<String> messageTypeList = getMessageType(messageJsonArray);
+        for (String type : messageTypeList) {
+            if ("record".equals(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 
 }

@@ -10,6 +10,8 @@ import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.model.group.GroupModel;
 import com.example.qqbot.model.group.ListeningGroupModel;
+import com.example.qqbot.model.group.GroupReReadingModel;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -22,6 +24,7 @@ import java.util.HashMap;
  * @date 2023/2/10 15:29
  */
 @Component
+@Slf4j
 public class PrivateModel implements Runnable, IMessageEvent {
     private DataPrivate dataPrivate;
 
@@ -38,15 +41,15 @@ public class PrivateModel implements Runnable, IMessageEvent {
         if (raw_message.startsWith("刷新复读机成员") && boolSupeRuser) {
             //需要超级用户权限
             //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
-            ReReadingModel.readfilearraysetre_reading_member_set(user_id);
+            GroupReReadingModel.readfilearraysetre_reading_member_set(user_id);
             return;
         }
         if (raw_message.startsWith("打印触发复读机关键词") && boolSupeRuser) { //需要超级用户权限
-            ReReadingModel.printKeySet(user_id);
+            GroupReReadingModel.printKeySet(user_id);
             return;
         }
         if (raw_message.startsWith("打印复读机成员") && boolSupeRuser) {//需要超级用户权限
-            ReReadingModel.printReReadingMemberSet(user_id);
+            GroupReReadingModel.printReReadingMemberSet(user_id);
             return;
         }
         if (raw_message.startsWith("刷新黑名单群聊数据") && boolSupeRuser) {//需要超级用户权限
@@ -87,10 +90,10 @@ public class PrivateModel implements Runnable, IMessageEvent {
         data.put("message", message);
         JSONObject json = SignalUtil.httpGet(SignalUtil.getPRIVATEENDPOINT(), data);
         if (json.isEmpty()) {
-            System.out.println("发送消息失败!");
+            log.info("发送消息失败!");
             return;
         }
-        System.out.println("发送成功!:" + json);
+        log.info("发送成功!:" + json);
     }
 
     /**

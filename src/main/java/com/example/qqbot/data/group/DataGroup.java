@@ -1,5 +1,6 @@
 package com.example.qqbot.data.group;
 
+import cn.hutool.json.JSONArray;
 import lombok.Data;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class DataGroup {
     /**
      * 消息内容
      */
-    private List<String> message;
+    private JSONArray message;
 
     /**
      * 原始消息内容

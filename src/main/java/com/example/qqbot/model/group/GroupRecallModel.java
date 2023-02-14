@@ -26,10 +26,6 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
 
     private DataGroupRecall dataGroupRecall;
 
-    {
-        System.out.println("GroupRecallModel被初始化了!!!!!!!!!!!!!!!!!!!!!");
-    }
-
     @Override
     public void run() {
         JSONObject messageJson = SignalUtil.getMessage(dataGroupRecall.getMessage_id());
@@ -54,11 +50,11 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
                 dataRecall.getSender().toStringPretty(), DateUtil.date(time),
                 dataRecall.getMessage().toStringPretty())).isEmpty();
         if (empty) {
-            log.info("已将消息推送给超级用户!");
+            log.info("消息推送给超级用户失败!=" + dataRecall);
             return;
         }
 
-        log.info("消息推送给超级用户失败!=" + dataRecall);
+        log.info("已将消息推送给超级用户!");
     }
 
 
@@ -90,7 +86,7 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
             //如果是机器人的撤回消息就不用推送消息给超级用户了
             return false;
         }
-        log.info("群有人撤回了消息了=" + message);
+        log.info("群成员" + dataGroupRecall.getUser_id() + "撤回了消息");
         this.run();
         return false;
     }

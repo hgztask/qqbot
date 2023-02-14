@@ -1,20 +1,24 @@
 package com.example.qqbot.model.group;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
+import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.LinkedHashSet;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 监听群消息
@@ -29,31 +33,20 @@ import java.util.Set;
 @Slf4j
 @Component
 public class ListeningGroupModel implements Runnable, IMessageEvent {
-
-
+    private static final File FILE = new File("E:\\监听群聊、推送群聊黑名单群聊.json");
     /**
-     * 监听的群
+     * 监听群聊、推送群聊与黑名单群聊
      */
-    private static final Set<String> LISTENINGGROUPIDSET = new LinkedHashSet<>();
+    private static JSONObject listeningorblackgroupid = getFileJSON(FILE);
 
     /**
-     * 推送消息的群聊
+     * 暂时用于判断是否继续推送bhVip群的消息
+     * 该值需要其他人员在群里回复指定格式内容才能
      */
-    private static final Set<String> PUSHGROUPIDSET = new LinkedHashSet<>();
+    public static String temp = "";
 
     /**
-     * 黑名单群组
-     */
-    private static List<String> BLACKGROUPID = ListUtil.toList("");
-
-    /**
-     * 黑名单用户
-     * 该用户的信息不会推送
-     */
-    private static final List<String> BLACKUSERID = ListUtil.toList("2978778354", "3426359078", "202619505");
-
-    /**
-     * 一个群重复次数
+     * 一个群连续出现重复消息次数
      */
     private static int groupEqualIndex = 1;
 
@@ -63,42 +56,21 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
     private static String groupEqualStr = "";
 
 
-    static {
-        LISTENINGGROUPIDSET.add("935671622");
-        LISTENINGGROUPIDSET.add("942611877");
-        PUSHGROUPIDSET.add("760849278");
-    }
-
-    @Setter
     private DataGroup dataGroup;
 
     @Override
     public void run() {
-        String user_id = dataGroup.getUser_id();
-        String group_id = dataGroup.getGroup_id();
         String raw_message = dataGroup.getRaw_message();
-        //判断是否有黑名单用户和黑名单群聊
-        if (BLACKUSERID.contains(user_id) || BLACKGROUPID.contains(group_id)) {
-            //包含在内的是不会执行推送消息的
-            log.info("触发了黑名单了操作了:ser_id=" + user_id + "\tgroup_id=" + group_id);
+        JSONArray list = listeningorblackgroupid.get("推送群聊", JSONArray.class);
+        if (list == null || list.isEmpty()) {
             return;
         }
-
-        if (isequlContent(raw_message)) {
-            //当连续有两条消息重复时不执行下面操作
-            return;
-        }
-
-        log.info("raw_message=" + raw_message);
-        System.out.println("============================");
-
-
-        for (String pushGroupID : PUSHGROUPIDSET) {
-            if (SignalUtil.sendGroupMessage(pushGroupID, raw_message).isEmpty()) {
+        for (Object pushGroupID : list) {
+            if (SignalUtil.sendGroupMessage(String.valueOf(pushGroupID), raw_message).isEmpty()) {
                 log.info("监听群聊推送消息失败!");
                 return;
             }
-            log.info("监听群聊推送消息成功!");
+            log.info("已将监听群聊的消息推送给推送群聊!");
         }
     }
 
@@ -134,7 +106,8 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * @param user_id 用户
      */
     public static void printPushGather(String user_id) {
-        if (SignalUtil.sendPrivateMessage(user_id, "接受推送消息的群聊集合:" + JSONUtil.parseArray(PUSHGROUPIDSET).toStringPretty()).isEmpty()) {
+        List<String> list = listeningorblackgroupid.get("推送群聊", List.class);
+        if (SignalUtil.sendPrivateMessage(user_id, "接受推送消息的群聊集合:" + JSONUtil.parseArray(list).toStringPretty()).isEmpty()) {
             log.info("打印接受推送消息的群聊集合-失败!");
             return;
         }
@@ -148,7 +121,8 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * @param group_id 群号
      */
     public static void printIsPush(String group_id) {
-        if (PUSHGROUPIDSET.contains(group_id)) {
+        List<String> list = listeningorblackgroupid.get("推送群聊", List.class);
+        if (list.contains(group_id)) {
             SignalUtil.sendGroupMessage(group_id, "当前群聊推送状态=true");
             return;
         }
@@ -156,14 +130,14 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
     }
 
     /**
-     * 打印指定内容消息
-     * 判断指定群聊是否是标记了推送状态并推送给指定用户
+     * 打印指定群聊是否是标记了推送状态并推送给指定用户
      *
      * @param group_id 判断的群号
      * @param user_id  推送的用户
      */
     public static void printIsPush(String group_id, String user_id) {
-        if (PUSHGROUPIDSET.contains(group_id)) {
+        List<String> list = listeningorblackgroupid.get("推送群聊", List.class);
+        if (list.contains(group_id)) {
             SignalUtil.sendPrivateMessage(user_id, "指定的群聊推送状态=true");
             return;
         }
@@ -171,13 +145,13 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
     }
 
     /**
-     * 打印指定内容消息
-     * 判断指定群聊是否标记了监听状态并发送消息给指定群聊
+     * 打印指定群聊是否标记了监听状态并发送消息给指定群聊
      *
      * @param group_id 要判断的群号
      */
     public static void printIslistening(String group_id) {
-        if (LISTENINGGROUPIDSET.contains(group_id)) {
+        List<String> list = listeningorblackgroupid.get("监听群聊", List.class);
+        if (list.contains(group_id)) {
             SignalUtil.sendGroupMessage(group_id, "当前群聊监听状态=true");
             return;
         }
@@ -185,14 +159,14 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
     }
 
     /**
-     * 打印指定内容消息
-     * 判断指定群聊是否标记了监听状态并发送消息给指定QQ号对象
+     * 打印指定群聊是否标记了监听状态并发送消息给指定QQ号对象
      *
      * @param group_id 要判断的群号
      * @param user_id  发送给消息的QQ号
      */
     public static void printIslistening(String group_id, String user_id) {
-        if (LISTENINGGROUPIDSET.contains(group_id)) {
+        List<String> list = listeningorblackgroupid.get("监听群聊", List.class);
+        if (list.contains(group_id)) {
             SignalUtil.sendPrivateMessage(user_id, "当前群聊监听状态=true");
             return;
         }
@@ -206,7 +180,8 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * @param user_id
      */
     public static void printlisteninggroupGather(String user_id) {
-        JSONObject json = SignalUtil.sendPrivateMessage(user_id, "监听群聊的集合的对象:\n" + JSONUtil.parseArray(LISTENINGGROUPIDSET).toStringPretty());
+        List<String> list = listeningorblackgroupid.get("监听群聊", List.class);
+        JSONObject json = SignalUtil.sendPrivateMessage(user_id, "监听群聊的集合的对象:\n" + JSONUtil.parseArray(list).toStringPretty());
         if (json.isEmpty()) {
             log.info("打印监听群聊的集合-失败!");
             return;
@@ -222,11 +197,14 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * @param group_id 群号,请确保机器人所在该群
      */
     public static void addlisteninggroupGather(String group_id) {
-        if (!(LISTENINGGROUPIDSET.add(group_id))) {
+        JSONArray list = listeningorblackgroupid.get("监听群聊", JSONArray.class);
+        if (!(list.add(group_id))) {
             log.info("往监听群聊的对象-失败!,该群已经在监听集合里了");
             SignalUtil.sendGroupMessage(group_id, "添加失败!,该群已经在监听集合里了!");
             return;
         }
+        //更新本地文件和内存的json
+        ListeningGroupModel.updateFileJSON();
         SignalUtil.sendGroupMessage(group_id, "已添加标记当前群为监听对象!");
     }
 
@@ -236,11 +214,14 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * @param group_id
      */
     public static void removelisteninggroupGather(String group_id) {
-        if (!(LISTENINGGROUPIDSET.remove(group_id))) {
+        JSONArray list = listeningorblackgroupid.get("监听群聊", JSONArray.class);
+        if (!(list.remove(group_id))) {
             log.info("删除监听群聊集合里指定的群聊对象-失败!,该群并不在监听群聊集合里");
             SignalUtil.sendGroupMessage(group_id, "删除失败,该群并不在监听群聊集合里");
             return;
         }
+        //更新本地文件和内存的json
+        ListeningGroupModel.updateFileJSON();
         SignalUtil.sendGroupMessage(group_id, "已移除取消标记当前群聊的监听状态!");
     }
 
@@ -252,13 +233,16 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * @param group_id 群号
      */
     public static void addPoshGroupGather(String group_id) {
-        boolean add = PUSHGROUPIDSET.add(group_id);
+        JSONArray list = listeningorblackgroupid.get("推送群聊", JSONArray.class);
+        boolean add = list.add(group_id);
         if (!add) {
             log.info("添加标记指定群聊作为推送群聊-添加失败!");
             SignalUtil.sendGroupMessage(group_id, "标记当前群为推送群聊失败,已经添加过了!");
             return;
         }
         log.info("添加标记指定群聊作为推送群聊-添加成功!");
+        //更新本地文件和内存的json
+        ListeningGroupModel.updateFileJSON();
         SignalUtil.sendGroupMessage(group_id, "已标记当前群为推送群聊");
     }
 
@@ -269,12 +253,15 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * @param group_id
      */
     public static void removePoshGroupGather(String group_id) {
-        if (!(PUSHGROUPIDSET.remove(group_id))) {
+        JSONArray list = listeningorblackgroupid.get("推送群聊", JSONArray.class);
+        if (!(list.remove(group_id))) {
             log.info("取消标记指定群聊作为推送群聊-失败!");
             SignalUtil.sendGroupMessage(group_id, "取消标记当前群为推送群聊失败,当前群并不在推送集合内");
             return;
         }
         log.info("取消标记指定群聊作为推送群聊-成功!");
+        //更新本地文件和内存的json
+        ListeningGroupModel.updateFileJSON();
         SignalUtil.sendGroupMessage(group_id, "取消标记当前群为推送群聊成功");
 
     }
@@ -304,23 +291,114 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
             return false;
         }
         this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
-        if (!(LISTENINGGROUPIDSET.contains(dataGroup.getGroup_id()))) {
+        String user_id = dataGroup.getUser_id();
+        String group_id = dataGroup.getGroup_id();
+        String raw_message = dataGroup.getRaw_message();
+
+        if (isequlContent(raw_message)) {
+            //当群连续有两条消息重复时不执行下面操作(不是仅仅针对个人,两个发各自相同的内容也会判断为相同,全局性为群)
+            return false;
+        }
+        JSONArray list = listeningorblackgroupid.get("监听群聊", JSONArray.class);
+        if (list == null || list.isEmpty()) {
+            //当监听群聊数组里没有内容时或者为nul,就不用监听
+            return false;
+        }
+        if (!(list.contains(dataGroup.getGroup_id()))) {
             //不是监听群聊对象
             return false;
         }
-        String user_id = dataGroup.getUser_id();
-        String group_id = dataGroup.getGroup_id();
-        if (BLACKUSERID.contains(user_id) || BLACKGROUPID.contains(group_id)) {
-            //有黑名单用户和黑名单群聊
-            //包含在内的是不会执行推送消息的
-            log.info("触发了黑名单了操作了:ser_id=" + user_id + "\tgroup_id=" + group_id);
+        list = listeningorblackgroupid.get("黑名单用户", JSONArray.class);
+        if (list.contains(user_id)) {
+            log.info("用户触发了黑名单操作:ser_id=" + user_id);
+            return false;
+        }
+        //判断是否有黑名单群聊
+        list = listeningorblackgroupid.get("黑名单群聊", JSONArray.class);
+        if (list.contains(group_id)) {
+            log.info("群聊触发了黑名单操作:tgroup_id=" + group_id);
+            return false;
+        }
+        if (raw_message.contains("口令") && "935671622".equals(group_id)) {
+            log.info("该资源群触发了广告消息了,故本轮不推送给其他群,直接推送给超级用户");
+            SignalUtil.sendPrivateMessage(DataUserEights.SUPERUSER.get(0), raw_message);
+            return false;
+        }
+        if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
+            log.info("检测到语音类型,故不推送");
             return false;
         }
 
-
+//        if (!("935671622".equals(user_id))) {
         this.run();
+//        }
+        //先测试功能是否完善!
+        //bhVip(group_id);
         return true;
     }
+
+
+    /**
+     * 如果是该群,则需要特殊点,当推送的内容不是图片时提示是否要接受消息!
+     */
+    private void bhVip(String group_id) {
+        log.info("测试,接收到来自别的群推送消息!");
+        SignalUtil.sendGroupMessage(group_id, "接收到来自别的群的推送消息,请在10秒内回复=同意接受推送消息 否则将不进行推送消息!");
+        //每次执行就将该值设置为默认,然后让成员在群里发送指定确定即可!
+        ListeningGroupModel.temp = "";
+        System.out.println(JSONUtil.parseObj(dataGroup).toStringPretty());
+        log.info("请在群里输入相关指令继续执行!,如果超时将按照不执行处理!");
+
+        //倒计时休眠10秒,如果一直没有结果则不执行!
+        for (int i = 10; i > 0; i--) {
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            if ("yes".equals(ListeningGroupModel.temp)) {
+                this.run();
+                return;
+            }
+        }
+        log.info("本次推送因无明确回复值,故结束!");
+    }
+
+
+    /**
+     * 读取本地监听群聊、推送群聊、黑名单群聊json内容
+     *
+     * @param file file文件路径
+     * @return jsonOBj对象
+     */
+    private static JSONObject getFileJSON(File file) {
+        JSONObject entries;
+        try {
+            entries = JSONUtil.readJSONObject(file, StandardCharsets.UTF_8);
+        } catch (IORuntimeException e) {
+            log.info(e.getMessage());
+            return new JSONObject(0);
+        }
+        if (entries.isEmpty()) {
+            return new JSONObject(0);
+        }
+        return entries;
+    }
+
+
+    /**
+     * 更新本地文件和内存的json
+     */
+    private static final void updateFileJSON() {
+        FileUtil.writeUtf8String(listeningorblackgroupid.toStringPretty(), FILE);
+        ListeningGroupModel.listeningorblackgroupid = ListeningGroupModel.getFileJSON(FILE);
+    }
+
+    private void isBlackGroup() {
+
+    }
+
+
 }
 
 

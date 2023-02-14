@@ -1,4 +1,4 @@
-package com.example.qqbot.model;
+package com.example.qqbot.model.group;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 复读逻辑层
+ * 群聊复读逻辑层
  *
  * @author byhgz
  * @version 1.0
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-public class ReReadingModel implements Runnable, IMessageEvent {
+public class GroupReReadingModel implements Runnable {
 
     /**
      * 群聊数据层
@@ -35,12 +35,11 @@ public class ReReadingModel implements Runnable, IMessageEvent {
     @Setter
     private DataGroup dataGroup;
 
-
     /**
      * 单例对象
      */
     @Getter
-    private static final ReReadingModel RE_READING_MODEL = new ReReadingModel();
+    private static final GroupReReadingModel RE_READING_MODEL = new GroupReReadingModel();
 
 
     /**
@@ -76,7 +75,7 @@ public class ReReadingModel implements Runnable, IMessageEvent {
     private static int groupEqualIndex = 1;
 
 
-    private ReReadingModel() {
+    private GroupReReadingModel() {
     }
 
     /**
@@ -233,18 +232,10 @@ public class ReReadingModel implements Runnable, IMessageEvent {
             return;
         }
 
-        //先定义可能以后还会用到
-        JSONObject dataGroupJson = JSONUtil.parseObj(dataGroup);
-        List<String> messageTypeList = InformationUtil.getMessageType(dataGroupJson);
-        if (!(messageTypeList.isEmpty())) {
-            String type = messageTypeList.get(0);
-            if ("record".equals(type)) {
-                //复读时过滤语音的类型
-                log.info("检测到语音消息,暂时还没写好跟语音相关的内容,故放弃本轮推送消息");
-                return;
-            }
+        if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
+            log.info("检测到语音类型,故不复读");
+            return;
         }
-        log.info("dataGroupJson=" + dataGroupJson.toStringPretty());
 
         JSONObject json = SignalUtil.sendGroupMessage(group_id, raw_message);
         if (json.isEmpty()) {
@@ -264,26 +255,4 @@ public class ReReadingModel implements Runnable, IMessageEvent {
 
     }
 
-
-    /**
-     * 权重,权重高的值会先匹配
-     *
-     * @return 权重值
-     */
-    @Override
-    public int weight() {
-        return 0;
-    }
-
-    /**
-     * 接受消息
-     *
-     * @param jsonObject 原始消息对象
-     * @param message    消息对象
-     * @return 是否匹配成功
-     */
-    @Override
-    public boolean onMessage(JSONObject jsonObject, Message message) {
-        return false;
-    }
 }

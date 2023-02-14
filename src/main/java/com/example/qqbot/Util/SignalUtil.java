@@ -117,7 +117,6 @@ public class SignalUtil {
         Connection.Response execute;
         try {
             execute = connection.execute();
-            System.out.println(execute.body());
         } catch (IOException e) {
             log.info("请求execute时出错" + e.getMessage());
             return JSONNULL;

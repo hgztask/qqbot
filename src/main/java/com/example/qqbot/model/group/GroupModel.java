@@ -3,7 +3,9 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
@@ -14,9 +16,7 @@ import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.model.Day60World;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
-import com.example.qqbot.model.ReReadingModel;
 import com.example.qqbot.model.pgr.PGRModel;
-import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -41,10 +41,6 @@ public class GroupModel implements Runnable, IMessageEvent {
      */
     private DataGroup dataGroup;
 
-    /**
-     * 外面接收到的jsonObj对象,可能用到
-     */
-    private JSONObject jsonObject;
 
     /**
      * 黑名单群聊
@@ -55,13 +51,14 @@ public class GroupModel implements Runnable, IMessageEvent {
     /**
      * 黑名单群组
      */
-    private static Set<String> BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
+    private static Set<String> BLACKGROUPID = GroupReReadingModel.getFileJson(BLACK_PATHF_FILE);
 
 
     /**
-     * 触发发送
+     * PGR
      */
-    private static final List<String> PGR_CONSCIOUS_COLLOCATION = ListUtil.toList("意识共鸣", "共鸣什么", "共鸣啥", "共鸣选啥", "共鸣怎么选", "意识带什么", "共鸣选哪个", "共鸣选什么", "意识推荐", "什么意识", "武器共鸣", "配队", "意识技能", "带啥意识");
+    private static final List<String> PGR_CONSCIOUS_COLLOCATION = ListUtil.toList("意识共鸣", "共鸣什么", "共鸣啥", "共鸣选啥", "共鸣怎么选", "意识带什么",
+            "共鸣选哪个", "共鸣选什么", "意识推荐", "什么意识", "武器共鸣", "配队", "意识技能", "用啥意识", "带啥意识");
 
 
     /**
@@ -76,6 +73,12 @@ public class GroupModel implements Runnable, IMessageEvent {
     private static final Map<String, Integer> user_idEqul = new HashMap<>(0);
 
 
+    /**
+     * 是否把群消息打印在控制台
+     */
+    private static boolean isPrintGroupMessageConsole = false;
+
+
     @Override
     @SuppressWarnings("all")
     public void run() {
@@ -83,14 +86,14 @@ public class GroupModel implements Runnable, IMessageEvent {
         String group_id = dataGroup.getGroup_id();
         //发言者QQ号
         String user_id = dataGroup.getUser_id();
-        Set<String> re_reading_member_set = ReReadingModel.getMEMBER_SET();
+        Set<String> re_reading_member_set = GroupReReadingModel.getMEMBER_SET();
 
         //是否是超级用户发的消息
         boolean boolSupeRuser = DataUserEights.SUPERUSER.contains(user_id);
 
         String raw_message = dataGroup.getRaw_message();
         if (raw_message.startsWith("查询当前群聊黑名单状态") && boolSupeRuser) {
-            GroupModel.printIsBlackGroup(group_id);
+            printIsBlackGroup(group_id);
             return;
         }
         //过滤
@@ -98,10 +101,15 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info(group_id + "群触发了黑名单了");
             return;
         }
-        log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
+
+        if (isPrintGroupMessageConsole) {
+            log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
+        }
+
+
         //实现触发某个关键词回复
         if (raw_message.startsWith("菜单")) {
-            SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), "菜单\n蓝奏云资源搜索=要搜索的资源");
+            SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), CharSequenceUtil.format("菜单\n蓝奏云资源搜索=要搜索的资源"));
             return;
         }
         if (InformationUtil.isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message)) {
@@ -125,7 +133,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             if (userATID.isEmpty()) {
                 return;
             }
-            ReReadingModel.addReReadingMemberSet(dataGroup, userATID);
+            GroupReReadingModel.addReReadingMemberSet(dataGroup, userATID);
             return;
         }
         if (raw_message.startsWith("移除复读机成员") && boolSupeRuser) { //需要超级用户权限
@@ -133,7 +141,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             if (userATID.isEmpty()) {
                 return;
             }
-            ReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
+            GroupReReadingModel.removeReReadingMemberSet(dataGroup, userATID);
             return;
         }
         if (raw_message.startsWith("添加触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
@@ -141,7 +149,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             if (key.isEmpty()) {
                 return;
             }
-            ReReadingModel.addKeySet(dataGroup, key);
+            GroupReReadingModel.addKeySet(dataGroup, key);
             return;
         }
         if (raw_message.startsWith("移除触发复读机关键词=") && boolSupeRuser) { //需要超级用户权限
@@ -149,7 +157,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             if (key.isEmpty()) {
                 return;
             }
-            ReReadingModel.removeKeySet(dataGroup, key);
+            GroupReReadingModel.removeKeySet(dataGroup, key);
             return;
         }
         if (raw_message.startsWith("标记当前群聊监听状态") && boolSupeRuser) {
@@ -184,10 +192,26 @@ public class GroupModel implements Runnable, IMessageEvent {
             removeBlackGroup(group_id);
             return;
         }
+        if (raw_message.startsWith("同意接受推送消息")) {
+            log.info("已同意来自推送消息的内容!");
+            ListeningGroupModel.temp = "yes";
+            return;
+        }
+        if (raw_message.startsWith("设置群消息打印在控制台值=") && boolSupeRuser) {
+            String subEqual = InformationUtil.subEqual("=", raw_message);
+            try {
+                isPrintGroupMessageConsole = Boolean.valueOf(subEqual);
+                log.info("已设置群消息打印在控制台值的值为" + subEqual);
+                SignalUtil.sendGroupMessage(group_id, "[CQ:at,qq=" + user_id + "]已设置是否允许群消息打印在控制台值的值=" + subEqual);
+            } catch (Exception e) {
+                log.info("设置群消息打印在控制台值的值转换错误!");
+                return;
+            }
+        }
 
-        if (re_reading_member_set.contains(user_id) || InformationUtil.keyContains(ReReadingModel.getKEY_SET(), filtrationCQ(raw_message))) {
+        if (re_reading_member_set.contains(user_id) || InformationUtil.keyContains(GroupReReadingModel.getKEY_SET(), InformationUtil.filtrationCQ(raw_message))) {
             //复读模块
-            ReReadingModel re_reading_model = ReReadingModel.getRE_READING_MODEL();
+            GroupReReadingModel re_reading_model = GroupReReadingModel.getRE_READING_MODEL();
             re_reading_model.setDataGroup(dataGroup);
             ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
             try {
@@ -195,6 +219,14 @@ public class GroupModel implements Runnable, IMessageEvent {
             } finally {
                 threadExecutor.shutdown();
             }
+            return;
+        }
+        if (raw_message.startsWith("获取头像") && boolSupeRuser) {
+            String userATID = InformationUtil.getUserATID(dataGroup);
+            if (userATID.isEmpty()) {
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk=" + userATID + "&s=640]");
             return;
         }
         if (raw_message.startsWith("执行demo") && boolSupeRuser) {
@@ -209,33 +241,13 @@ public class GroupModel implements Runnable, IMessageEvent {
 
 
     /**
-     * 过滤消息中的CQ码,如头部[CQ:我是CQ的内容]尾部
-     * 过滤之后=头部尾部
-     * 如果过滤之后还是跟原来的一样,就返回原来的字符串
-     * 去除字符串中[CQ:....]中的CQ内容
-     *
-     * @param content 要过滤的字符串
-     * @return 过滤之后的结果
-     */
-    public static String filtrationCQ(@NonNull String content) {
-        String str = content.replaceAll("(\\[CQ:).*?(\\])", "");
-        if (str.isEmpty()) {
-            return "";
-        }
-        if (str.equals(content)) {
-            return content;
-        }
-        return str;
-    }
-
-    /**
      * 刷新黑名单群聊数据并重新赋值
      * 会重新读取本地指定路径的json文件重新赋值给指定集合对象
      *
      * @param user_id 接受消息者 一般是超级用户
      */
     public static void readFIlePathBlackList(String user_id) {
-        BLACKGROUPID = ReReadingModel.getFileJson(BLACK_PATHF_FILE);
+        BLACKGROUPID = GroupReReadingModel.getFileJson(BLACK_PATHF_FILE);
         SignalUtil.sendPrivateMessage(user_id, "已刷新黑名单群聊数据并重新赋值!");
     }
 
@@ -244,7 +256,7 @@ public class GroupModel implements Runnable, IMessageEvent {
      *
      * @param group_id 群号
      */
-    public static void addBlackGroup(String group_id) {
+    public void addBlackGroup(String group_id) {
         if (BLACKGROUPID.contains(group_id)) {
             SignalUtil.sendGroupMessage(group_id, "当前群已存在黑名单中!");
             return;
@@ -259,7 +271,7 @@ public class GroupModel implements Runnable, IMessageEvent {
      *
      * @param group_id 群号
      */
-    public static void removeBlackGroup(String group_id) {
+    public void removeBlackGroup(String group_id) {
         if (BLACKGROUPID.remove(group_id)) {
             FileUtil.writeUtf8String(JSONUtil.parseArray(BLACKGROUPID).toStringPretty(), BLACK_PATHF_FILE);
             SignalUtil.sendGroupMessage(group_id, "当前群已从黑名单移除!");
@@ -284,12 +296,12 @@ public class GroupModel implements Runnable, IMessageEvent {
      * @param group_id
      * @return
      */
-    public static boolean printIsBlackGroup(String group_id) {
+    public boolean printIsBlackGroup(String group_id) {
         if (BLACKGROUPID.contains(group_id)) {
             SignalUtil.sendGroupMessage(group_id, "当前群聊黑名单状态=true");
             return true;
         }
-        SignalUtil.sendGroupMessage(group_id, "当前群聊黑名单状态=true");
+        SignalUtil.sendGroupMessage(group_id, "当前群聊黑名单状态=false");
         return false;
     }
 
@@ -317,17 +329,31 @@ public class GroupModel implements Runnable, IMessageEvent {
         if (!("group".equals(message.getMessage_type()))) {
             return false;
         }
+        this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
+        String user_id = dataGroup.getUser_id();
+        String group_id = dataGroup.getGroup_id();
         //群聊消息
+        if ("2854196310".equals(user_id)) {
+            log.info(group_id + "无法回复Q群管家的信息!");
+            return false;
+        }
+        if ("2723743041".equals(user_id) || "3558332383".equals(user_id)) {
+            List<String> messageType = InformationUtil.getMessageType(dataGroup.getMessage());
+            if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
+                System.out.println("是语音消息!");
+                System.out.println(messageType);
+                return false;
+            }
+            log.info("不是语音消息=" + JSONUtil.parseObj(dataGroup));
+            return false;
+        }
 
-            Day60World day60World = Day60World.getDay60World();
-            this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
 
-            day60World.setDataGroup(dataGroup);
-            //threadPool.execute(day60World);
-            run();
+        Day60World day60World = Day60World.getDay60World();
 
-        //log.info("群聊消息=" + jsonObject.toStringPretty());
-        //log.info("群聊消息 " + dataGroup.toString());
+        day60World.setDataGroup(dataGroup);
+        //threadPool.execute(day60World);
+        this.run();
         return true;
     }
 }

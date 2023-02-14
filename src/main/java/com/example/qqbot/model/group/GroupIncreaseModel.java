@@ -2,6 +2,7 @@ package com.example.qqbot.model.group;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
@@ -39,26 +40,18 @@ public class GroupIncreaseModel implements Runnable, GetTypeFace, IMessageEvent 
         String user_id = dataGroupDecrease.getUser_id();
         //所在的群号
         String group_id = dataGroupDecrease.getGroup_id();
-        //有人进群则分别表示 approve 管理员已同意入群、 invite 管理员邀请入群
-        String sub_type = dataGroupDecrease.getSub_type();
         //操作者 QQ 号 ( 如果是主动退群, 则和 user_id 相同 )
         String operator_id = dataGroupDecrease.getOperator_id();
+        //有人进群则分别表示 approve 管理员已同意入群、 invite 管理员邀请入群
+        String sub_type = dataGroupDecrease.getSub_type();
         long time = dataGroupDecrease.getTime() * 1000;
-
-        data.put("group_id", group_id);
-        data.put("message",
-                String.format("欢迎[CQ:at,qq=%s]进群\n操作对象:%s\n事件类型:%s\n事件:%s",
-                        user_id, operator_id, getType(sub_type),
-                        DateUtil.date(time))
-        );
-
-        log.info("time=" + time);
-        JSONObject json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
-        if (json.isEmpty()) {
-            System.out.println("发送群消息失败了" + json);
-            return;
-        }
-        System.out.println("发送消息成功!");
+        String message = CharSequenceUtil.format("[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk={}&s=640]\n" +
+                        "欢迎[CQ:at,qq={}]进群\n" +
+                        "操作对象:{}\n" +
+                        "事件类型:{}\n" +
+                        "时间:{}",
+                user_id, user_id, operator_id, getType(sub_type), DateUtil.date(time));
+        SignalUtil.sendGroupMessage(group_id, message);
 
     }
 

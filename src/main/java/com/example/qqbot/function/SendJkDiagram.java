@@ -1,4 +1,4 @@
-package com.example.qqbot.model.group;
+package com.example.qqbot.function;
 
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
@@ -7,14 +7,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * 私聊撤回逻辑层
+ *
+ * 发送jk图
  * @author byhgz
  * @version 1.0
- * @date 2023/2/14 16:32
+ * @date 2023/2/14 22:41
  */
 @Slf4j
 @Component
-public class FriendRecallModel implements Runnable, IMessageEvent {
+public class SendJkDiagram implements Runnable, IMessageEvent {
+
+
     /**
      * 权重,权重高的值会先匹配
      *
@@ -34,12 +37,7 @@ public class FriendRecallModel implements Runnable, IMessageEvent {
      */
     @Override
     public boolean onMessage(JSONObject jsonObject, Message message) {
-        if (!("friend_recall".equals(message.getNotice_type()))) {
-            return false;
-        }
-        //私聊消息撤回
-        log.info("私聊消息撤回了" + jsonObject.toStringPretty());
-        return true;
+        return false;
     }
 
     @Override
