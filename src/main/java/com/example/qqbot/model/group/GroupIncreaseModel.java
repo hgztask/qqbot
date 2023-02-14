@@ -1,11 +1,15 @@
 package com.example.qqbot.model.group;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
+import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroupDecrease;
 import com.example.qqbot.face.GetTypeFace;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
@@ -17,16 +21,12 @@ import java.util.HashMap;
  * @date 2023/2/10 16:54
  */
 @Slf4j
-public class GroupIncreaseModel implements Runnable, GetTypeFace {
+@Component
+public class GroupIncreaseModel implements Runnable, GetTypeFace, IMessageEvent {
     /**
      * 群人数增加的数据对象
      */
     private DataGroupDecrease dataGroupDecrease;
-
-
-    public GroupIncreaseModel(DataGroupDecrease dataGroupDecrease) {
-        this.dataGroupDecrease = dataGroupDecrease;
-    }
 
     @Override
     public void run() {
@@ -43,7 +43,7 @@ public class GroupIncreaseModel implements Runnable, GetTypeFace {
         String sub_type = dataGroupDecrease.getSub_type();
         //操作者 QQ 号 ( 如果是主动退群, 则和 user_id 相同 )
         String operator_id = dataGroupDecrease.getOperator_id();
-        long time = dataGroupDecrease.getTime()*1000;
+        long time = dataGroupDecrease.getTime() * 1000;
 
         data.put("group_id", group_id);
         data.put("message",
@@ -75,6 +75,35 @@ public class GroupIncreaseModel implements Runnable, GetTypeFace {
             case "invite" -> "管理员邀请入群";
             default -> "w未知状态";
         };
+    }
+
+    /**
+     * 权重,权重高的值会先匹配
+     *
+     * @return 权重值
+     */
+    @Override
+    public int weight() {
+        return 0;
+    }
+
+    /**
+     * 接受消息
+     *
+     * @param jsonObject 原始消息对象
+     * @param message    消息对象
+     * @return 是否匹配成功
+     */
+    @Override
+    public boolean onMessage(JSONObject jsonObject, Message message) {
+        if (!("group_increase".equals(message.getNotice_type()))) {
+            return false;
+        }
+        //群成员增加
+        this.dataGroupDecrease = BeanUtil.toBean(jsonObject, DataGroupDecrease.class);
+        log.info(dataGroupDecrease.getGroup_id() + "群的 " + dataGroupDecrease.getUser_id() + " 成员增加了");
+        this.run();
+        return true;
     }
 }
 

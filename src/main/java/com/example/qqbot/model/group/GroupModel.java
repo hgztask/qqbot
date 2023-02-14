@@ -1,14 +1,18 @@
 package com.example.qqbot.model.group;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.Util.InformationUtil;
+import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.DataUserEights;
+import com.example.qqbot.model.Day60World;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
 import com.example.qqbot.model.ReReadingModel;
 import com.example.qqbot.model.pgr.PGRModel;
@@ -20,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.example.qqbot.Util.InformationUtil;
+import org.springframework.stereotype.Component;
 
 /**
  * 群聊逻辑层
@@ -30,7 +34,8 @@ import com.example.qqbot.Util.InformationUtil;
  * @date 2023/2/10 17:13
  */
 @Slf4j
-public class GroupModel implements Runnable {
+@Component
+public class GroupModel implements Runnable, IMessageEvent {
     /**
      * 群聊数据层
      */
@@ -46,11 +51,6 @@ public class GroupModel implements Runnable {
      */
     private static final File BLACK_PATHF_FILE = new File("E:\\黑名单群聊.json");
 
-
-    public GroupModel(DataGroup dataGroup, JSONObject jsonObject) {
-        this.dataGroup = dataGroup;
-        this.jsonObject = jsonObject;
-    }
 
     /**
      * 黑名单群组
@@ -294,6 +294,42 @@ public class GroupModel implements Runnable {
     }
 
 
+    /**
+     * 权重
+     *
+     * @return 权重值
+     */
+    @Override
+    public int weight() {
+        return 5;
+    }
+
+    /**
+     * 接受消息
+     *
+     * @param jsonObject
+     * @param message
+     * @return 是否匹配成功
+     */
+    @Override
+    @SuppressWarnings("all")
+    public boolean onMessage(JSONObject jsonObject, Message message) {
+        if (!("group".equals(message.getMessage_type()))) {
+            return false;
+        }
+        //群聊消息
+
+            Day60World day60World = Day60World.getDay60World();
+            this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
+
+            day60World.setDataGroup(dataGroup);
+            //threadPool.execute(day60World);
+            run();
+
+        //log.info("群聊消息=" + jsonObject.toStringPretty());
+        //log.info("群聊消息 " + dataGroup.toString());
+        return true;
+    }
 }
 
 

@@ -3,12 +3,15 @@ package com.example.qqbot.model;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +26,8 @@ import java.util.concurrent.TimeUnit;
  * @date 2023/2/11 21:31
  */
 @Slf4j
-public class ReReadingModel implements Runnable {
+@Component
+public class ReReadingModel implements Runnable, IMessageEvent {
 
     /**
      * 群聊数据层
@@ -261,4 +265,25 @@ public class ReReadingModel implements Runnable {
     }
 
 
+    /**
+     * 权重,权重高的值会先匹配
+     *
+     * @return 权重值
+     */
+    @Override
+    public int weight() {
+        return 0;
+    }
+
+    /**
+     * 接受消息
+     *
+     * @param jsonObject 原始消息对象
+     * @param message    消息对象
+     * @return 是否匹配成功
+     */
+    @Override
+    public boolean onMessage(JSONObject jsonObject, Message message) {
+        return false;
+    }
 }

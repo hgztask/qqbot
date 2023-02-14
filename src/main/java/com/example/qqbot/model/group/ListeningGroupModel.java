@@ -1,13 +1,16 @@
 package com.example.qqbot.model.group;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
-import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,13 +27,8 @@ import java.util.Set;
  * @date 2023/2/12 22:25
  */
 @Slf4j
-public class ListeningGroupModel implements Runnable {
-
-    /**
-     * 单例对象
-     */
-    @Getter
-    private static final ListeningGroupModel listeningGroupModel = new ListeningGroupModel();
+@Component
+public class ListeningGroupModel implements Runnable, IMessageEvent {
 
 
     /**
@@ -76,12 +74,6 @@ public class ListeningGroupModel implements Runnable {
 
     @Override
     public void run() {
-        if (dataGroup == null) {
-            throw new NullPointerException("dataGroup为null");
-        }
-        if (!(LISTENINGGROUPIDSET.contains(dataGroup.getGroup_id()))) {
-            return;
-        }
         String user_id = dataGroup.getUser_id();
         String group_id = dataGroup.getGroup_id();
         String raw_message = dataGroup.getRaw_message();
@@ -287,6 +279,48 @@ public class ListeningGroupModel implements Runnable {
 
     }
 
+    /**
+     * 权重,权重高的值会先匹配
+     *
+     * @return 权重值
+     */
+    @Override
+    public int weight() {
+        //该类的权重要比正常群聊的权重大!
+        return 6;
+    }
+
+    /**
+     * 接受消息
+     *
+     * @param jsonObject 原始消息对象
+     * @param message    消息对象
+     * @return 是否匹配成功
+     */
+    @Override
+    public boolean onMessage(JSONObject jsonObject, Message message) {
+        if (!(("group".equals(message.getMessage_type())))) {
+            //不是群聊
+            return false;
+        }
+        this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
+        if (!(LISTENINGGROUPIDSET.contains(dataGroup.getGroup_id()))) {
+            //不是监听群聊对象
+            return false;
+        }
+        String user_id = dataGroup.getUser_id();
+        String group_id = dataGroup.getGroup_id();
+        if (BLACKUSERID.contains(user_id) || BLACKGROUPID.contains(group_id)) {
+            //有黑名单用户和黑名单群聊
+            //包含在内的是不会执行推送消息的
+            log.info("触发了黑名单了操作了:ser_id=" + user_id + "\tgroup_id=" + group_id);
+            return false;
+        }
+
+
+        this.run();
+        return true;
+    }
 }
 
 

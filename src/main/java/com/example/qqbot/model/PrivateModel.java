@@ -1,12 +1,16 @@
 package com.example.qqbot.model;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
+import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataPrivate;
 import com.example.qqbot.data.DataUserEights;
+import com.example.qqbot.data.Message;
 import com.example.qqbot.model.group.GroupModel;
 import com.example.qqbot.model.group.ListeningGroupModel;
+import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 
@@ -17,12 +21,10 @@ import java.util.HashMap;
  * @version 1.0
  * @date 2023/2/10 15:29
  */
-public class PrivateModel implements Runnable {
+@Component
+public class PrivateModel implements Runnable, IMessageEvent {
     private DataPrivate dataPrivate;
 
-    public PrivateModel(DataPrivate dataPrivate) {
-        this.dataPrivate = dataPrivate;
-    }
 
     @Override
     public void run() {
@@ -74,7 +76,7 @@ public class PrivateModel implements Runnable {
             }
             ListeningGroupModel.printIsPush(group_id, user_id);
         }
-        if (raw_message.startsWith("打印群聊黑名单")&&boolSupeRuser) {
+        if (raw_message.startsWith("打印群聊黑名单") && boolSupeRuser) {
             GroupModel.printBlackGroup(user_id);
             return;
         }
@@ -89,9 +91,35 @@ public class PrivateModel implements Runnable {
             return;
         }
         System.out.println("发送成功!:" + json);
-
-
     }
 
+    /**
+     * 权重
+     *
+     * @return 权重值
+     */
+    @Override
+    public int weight() {
+        return 10;
+    }
 
+    /**
+     * 接受消息
+     *
+     * @param jsonObject
+     * @param message
+     * @return 是否匹配成功
+     */
+    @Override
+    public boolean onMessage(JSONObject jsonObject, Message message) {
+        if (!("private".equals(message.getMessage_type()))) {
+            //如果不是私聊消息
+            return false;
+        }
+
+        //获取私聊消息数据
+        dataPrivate = BeanUtil.toBean(jsonObject, DataPrivate.class);
+        run();
+        return true;
+    }
 }

@@ -1,10 +1,14 @@
 package com.example.qqbot.model;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
+import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataInvitedGroup;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * 处理加群请求/邀请的逻辑层
@@ -13,14 +17,11 @@ import lombok.extern.slf4j.Slf4j;
  * @version 1.0
  * @date 2023/2/12 11:22
  */
+@Component
 @Slf4j
-public class InvitedGroupModel implements Runnable {
+public class InvitedGroupModel implements Runnable, IMessageEvent {
 
     private DataInvitedGroup dataInvitedGroup;
-
-    public InvitedGroupModel(DataInvitedGroup dataInvitedGroup) {
-        this.dataInvitedGroup = dataInvitedGroup;
-    }
 
     @Override
     @SuppressWarnings("all")
@@ -87,9 +88,30 @@ public class InvitedGroupModel implements Runnable {
     }
 
 
+    /**
+     * 权重,权重高的值会先匹配
+     *
+     * @return 权重值
+     */
+    @Override
+    public int weight() {
+        return 1;
+    }
+
+    /**
+     * 接受消息
+     *
+     * @param jsonObject
+     * @param message
+     * @return 是否匹配成功
+     */
+    @Override
+    public boolean onMessage(JSONObject jsonObject, Message message) {
+        if (!("group".equals(message.getRequest_type()) && "request".equals(message.getPost_type()))) {
+            return false;
+        }//如果是加群请求/邀请的类型通知
+        this.dataInvitedGroup = BeanUtil.toBean(jsonObject, DataInvitedGroup.class);
+       this.run();
+        return true;
+    }
 }
-
-
-
-
-
