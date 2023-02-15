@@ -38,6 +38,14 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
             log.info("获取群撤回的data消息失败,data=null");
             return;
         }
+        //撤回的人员QQ号
+        String user_id = dataRecall.getSender().get("user_id", String.class);
+        if (DataUserEights.BOTUSERID.contains(user_id)) {
+            log.info("机器人撤回的消息不需要推送给超级用户!");
+            return;
+        }
+
+
         long time = dataRecall.getTime() * 1000;
         boolean empty = SignalUtil.sendPrivateMessage(DataUserEights.SUPERUSER.get(0), CharSequenceUtil.format("""
                         ===撤回消息记录====
