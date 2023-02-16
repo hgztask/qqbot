@@ -29,12 +29,73 @@ public class DataJson {
 
 
     /**
+     * 回复引用消息
+     *
+     * @param message_id 消息id
+     * @return jsonobj对象
+     */
+    public static JSONObject reply(String message_id) {
+        JSONObject jsonObject = new JSONObject();
+        JSONObject data = new JSONObject();
+        data.set("id", message_id);
+        jsonObject.set("type", "reply");
+        jsonObject.set("data", data);
+        return jsonObject;
+    }
+
+    /**
+     * 指定引用消息回复,简而言之,就是回复别人
+     * 该方法封装了别的json对象,但是只能回复文本内容
+     *
+     * @param message_id 引用的消息id
+     * @param user_id    回复的对象,也就是要艾特谁
+     * @param content    回复的内容
+     * @return jsonarry对象
+     */
+    public static JSONArray reply(String message_id, String user_id, String content) {
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(DataJson.reply(message_id));
+        jsonArray.add(DataJson.at(user_id));
+        jsonArray.add(text(content));
+        return jsonArray;
+    }
+
+
+    /**
+     * 生成json样式的at对象
+     *
+     * @param user_id @的 QQ 号, all 表示全体成员
+     * @param name    当在群中找不到此QQ号的名称时才会生效
+     * @return json样式对象
+     */
+    public static JSONObject at(String user_id, String name) {
+        JSONObject jsonObject = new JSONObject(2);
+        JSONObject data = new JSONObject(2);
+        jsonObject.set("type", "at");
+        jsonObject.set("data", data);
+        data.set("qq", user_id);
+        data.set("name", name);
+        return jsonObject;
+    }
+
+    /**
+     * 生成json样式的at对象
+     *
+     * @param user_id @的 QQ 号, all 表示全体成员
+     * @return json样式对象
+     */
+    public static JSONObject at(String user_id) {
+        return at(user_id, "艾特无效.此人不在群里");
+    }
+
+
+    /**
      * 封装json样式的image类型消息
      *
-     * @param file 文件名
+     * @param file  文件名
      * @param url   网络地址
      * @param cache 只在通过网络 URL 发送时有效, 表示是否使用已缓存的文件, 默认为1,即默认true
-     * @return  jsonObj对象
+     * @return jsonObj对象
      */
     public static JSONObject imageUrl(String file, String url, boolean cache) {
         JSONObject jsonObject = new JSONObject();
@@ -70,7 +131,6 @@ public class DataJson {
 
         JSONObject jsonObject = SignalUtil.sendGroupMessage("528828094", json.toString());
         System.out.println(jsonObject);
-
     }
 
 

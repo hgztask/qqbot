@@ -78,21 +78,20 @@ public class GroupDecreaseModel implements Runnable, GetTypeFace, IMessageEvent 
         log.info("操作对象:" + operator_id);
         long time = dataGroupDecrease.getTime() * 1000;
 
-        data.put("group_id", dataGroupDecrease.getGroup_id());
-        data.put("message", CharSequenceUtil.format("[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk={}&s=640]\n" +
+
+        if (SignalUtil.sendGroupMessage(group_id, CharSequenceUtil.format("[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk={}&s=640]\n" +
                         "{}成员退出群了\n" +
                         "操作对象:{}\n" +
                         "事件类型:{}\n" +
                         "时间:{}",
-                user_id, user_id, getOperationObject(user_id, operator_id), getType(sub_type), DateUtil.date(time)));
-        JSONObject json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
-        if (json.isEmpty()) {
-            log.info("发送群消息失败了" + json);
+                user_id, user_id, getOperationObject(user_id, operator_id), getType(sub_type), DateUtil.date(time))).isEmpty()) {
+
+            log.info("发送群消息失败了");
             return;
         }
         log.info("发送消息成功!");
-
     }
+
 
     /**
      * 权重,权重高的值会先匹配

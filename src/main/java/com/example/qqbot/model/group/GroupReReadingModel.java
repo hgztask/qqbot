@@ -3,10 +3,8 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
-import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +13,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -245,9 +245,13 @@ public class GroupReReadingModel implements Runnable {
         //消息id
         String message_id = json.getByPath("data.message_id", String.class);
         try {
-            TimeUnit.SECONDS.sleep(35);
+            TimeUnit.SECONDS.sleep(115);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        }
+        if (message_id==null||message_id.isEmpty()) {
+            log.info("获取消息id失败!");
+            return;
         }
         //每次复读完成之后根据上面的倒计时撤回消息
         SignalUtil.deleteMsg(message_id);

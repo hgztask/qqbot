@@ -50,6 +50,7 @@ public class WebsocketClient {
                     }
                     Subject.change(jsonObject, message);
                 }
+
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
                     log.info("[websocket] 退出连接");

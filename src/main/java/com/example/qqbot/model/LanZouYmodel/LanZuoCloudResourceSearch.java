@@ -83,11 +83,9 @@ public class LanZuoCloudResourceSearch implements Runnable {
     private void startGet(StringBuilder messageBuilder) {
         //休息一秒之后继续发送
         TimeUnit.SECONDS.sleep(1);
-        HashMap<String, String> data = new HashMap<>();
-        data.put("group_id", dataGroup.getGroup_id());
-        data.put("message", String.valueOf(messageBuilder));
-        JSONObject json = SignalUtil.httpGet(SignalUtil.getGROUPENDPOINT(), data);
-        if (json.isEmpty()) {
+        JSONObject jsonObject = SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), String.valueOf(messageBuilder));
+
+        if (jsonObject.isEmpty()) {
             log.info("发送失败");
             return;
         }

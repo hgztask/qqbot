@@ -3,6 +3,7 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -61,16 +62,21 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
     @Override
     public void run() {
         String raw_message = dataGroup.getRaw_message();
+        //监听的群聊
+        String group_id = dataGroup.getGroup_id();
         JSONArray list = listeningorblackgroupid.get("推送群聊", JSONArray.class);
         if (list == null || list.isEmpty()) {
             return;
         }
+
+
+        //这里需要增加新功能,要求截取atCQ段落的部分,其余的正常推送!
         for (Object pushGroupID : list) {
             if (SignalUtil.sendGroupMessage(String.valueOf(pushGroupID), raw_message).isEmpty()) {
                 log.info("监听群聊推送消息失败!");
                 return;
             }
-            log.info("已将监听群聊的消息推送给推送群聊!");
+            log.info(CharSequenceUtil.format("已将监听{}群聊的消息推送给推送群聊{}", group_id, pushGroupID));
         }
     }
 
@@ -310,13 +316,13 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
         }
         list = listeningorblackgroupid.get("黑名单用户", JSONArray.class);
         if (list.contains(user_id)) {
-            log.info("用户触发了黑名单操作:ser_id=" + user_id);
+            log.info("用户触发了监听推送黑名单操作:ser_id=" + user_id);
             return false;
         }
         //判断是否有黑名单群聊
         list = listeningorblackgroupid.get("黑名单群聊", JSONArray.class);
         if (list.contains(group_id)) {
-            log.info("群聊触发了黑名单操作:tgroup_id=" + group_id);
+            log.info("群聊触发了监听推送黑名单操作:tgroup_id=" + group_id);
             return false;
         }
         if (raw_message.contains("口令") && "935671622".equals(group_id)) {

@@ -3,28 +3,35 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
-import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.Util.InformationUtil;
-import com.example.qqbot.data.Message;
-import com.example.qqbot.data.group.DataGroup;
+import com.example.qqbot.Util.NetworkUtil;
+import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.data.CQ.CQCode;
 import com.example.qqbot.data.DataUserEights;
-import com.example.qqbot.model.Day60World;
+import com.example.qqbot.data.Message;
+import com.example.qqbot.data.file.DataFile;
+import com.example.qqbot.data.group.DataGroup;
+import com.example.qqbot.data.json.DataJson;
 import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
 import com.example.qqbot.model.pgr.PGRModel;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import org.springframework.stereotype.Component;
 
 /**
  * 群聊逻辑层
@@ -86,6 +93,8 @@ public class GroupModel implements Runnable, IMessageEvent {
         String group_id = dataGroup.getGroup_id();
         //发言者QQ号
         String user_id = dataGroup.getUser_id();
+        //消息id
+        String message_id = dataGroup.getMessage_id();
         Set<String> re_reading_member_set = GroupReReadingModel.getMEMBER_SET();
 
         //是否是超级用户发的消息
@@ -104,6 +113,12 @@ public class GroupModel implements Runnable, IMessageEvent {
 
         if (isPrintGroupMessageConsole) {
             log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
+        }
+
+        if (user_id.equals("2978778354")) {
+            System.out.println(raw_message);
+            System.out.println(dataGroup.getMessage_id());
+            System.out.println(dataGroup.getMessage());
         }
 
 
@@ -208,6 +223,49 @@ public class GroupModel implements Runnable, IMessageEvent {
                 return;
             }
         }
+        if (raw_message.startsWith("获取原神图")) {
+            String url = DataFile.getRandomKey();
+            JSONObject json = SignalUtil.sendGroupMessage(group_id, CQCode.image(InformationUtil.lastSubEqual("/", url), URLEncodeUtil.encode(url), false));
+            System.out.println(json.toStringPretty());
+            System.out.println("=====================");
+            return;
+        }
+        if (raw_message.startsWith("翻译")) {
+            String subEqual = InformationUtil.subEqual("翻译", raw_message);
+            if (subEqual.isEmpty()) {
+                log.info("subEqual获取值失败,为空字符串");
+                return;
+            }
+            JSONObject translate = NetworkUtil.translate(subEqual);
+            if (translate.isEmpty()) {
+                log.info("translate获取值失败,为空的json对象");
+                return;
+            }
+            String tgt = translate.getByPath("translateResult[0][0].tgt", String.class);
+            if (tgt == null || tgt.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "翻译失败!");
+                return;
+            }
+            JSONArray reply = DataJson.reply(message_id, user_id, tgt);
+            SignalUtil.sendGroupMessage(group_id, reply.toString());
+            return;
+        }
+        if (raw_message.startsWith("解析蓝奏云直链") & boolSupeRuser) {
+            String subEqual = InformationUtil.subEqual("解析蓝奏云直链", raw_message);
+            if (subEqual.isEmpty()) {
+                log.info("subEqual获取值失败,为空字符串");
+                return;
+            }
+            String url = NetworkUtil.analyticStraightChainLanZouY(subEqual);
+            if (url.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "获取失败!");
+                return;
+            }
+            JSONArray reply = DataJson.reply(message_id, user_id, url);
+            SignalUtil.sendGroupMessage(group_id, reply.toString());
+            return;
+        }
+
 
         if (re_reading_member_set.contains(user_id) || InformationUtil.keyContains(GroupReReadingModel.getKEY_SET(), InformationUtil.filtrationCQ(raw_message))) {
             //复读模块
@@ -337,22 +395,12 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info(group_id + "无法回复Q群管家的信息!");
             return false;
         }
-        if ("2723743041".equals(user_id) || "3558332383".equals(user_id)) {
-            List<String> messageType = InformationUtil.getMessageType(dataGroup.getMessage());
-            if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
-                System.out.println("是语音消息!");
-                System.out.println(messageType);
-                return false;
-            }
-            log.info("不是语音消息=" + JSONUtil.parseObj(dataGroup));
+
+        if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
+            System.out.println("是语音消息!");
             return false;
         }
 
-
-        Day60World day60World = Day60World.getDay60World();
-
-        day60World.setDataGroup(dataGroup);
-        //threadPool.execute(day60World);
         this.run();
         return true;
     }

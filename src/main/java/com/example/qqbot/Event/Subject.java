@@ -3,6 +3,7 @@ package com.example.qqbot.Event;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.data.Message;
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,7 @@ public class Subject {
     /**
      * 有序的接口,用于后面遍历和权重相关的
      */
+    @Getter
     private static List<IMessageEvent> list;
 
     @Autowired
