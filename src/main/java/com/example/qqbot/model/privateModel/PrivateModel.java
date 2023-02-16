@@ -102,6 +102,7 @@ public class PrivateModel implements Runnable, IMessageEvent {
             }
             SignalUtil.sendPrivateMessage(user_id, "版本信息=" + version_info.toStringPretty());
             log.info("已执行发送版本信息");
+            return;
         }
 
         //下面是复读私聊的
