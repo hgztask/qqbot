@@ -24,5 +24,10 @@ public class DataUserEights {
      */
     public static final List<String> ADMINISTRATORS = ListUtil.toList("");
 
+    /**
+     * 机器人qq号
+     */
+    public static final List<String> BOTUSERID = ListUtil.toList("3426359078","2761486085");
+
 
 }
