@@ -10,6 +10,9 @@ import com.example.qqbot.data.group.DataInvitedGroup;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * 处理加群请求/邀请的逻辑层
  *
@@ -49,6 +52,11 @@ public class InvitedGroupModel implements Runnable, IMessageEvent {
 
     /**
      * 处理群满或未满的情况
+     *
+     * @param max_member_count
+     * @param member_count
+     * @param dataInvitedGroup
+     * @param reason
      */
     private static void manchusAndImans(Integer max_member_count, Integer member_count, DataInvitedGroup dataInvitedGroup, String reason) {
         //群满时
@@ -106,12 +114,15 @@ public class InvitedGroupModel implements Runnable, IMessageEvent {
      * @return 是否匹配成功
      */
     @Override
+    @SuppressWarnings("all")
     public boolean onMessage(JSONObject jsonObject, Message message) {
         if (!("group".equals(message.getRequest_type()) && "request".equals(message.getPost_type()))) {
             return false;
         }//如果是加群请求/邀请的类型通知
         this.dataInvitedGroup = BeanUtil.toBean(jsonObject, DataInvitedGroup.class);
-       this.run();
+        ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
+        threadExecutor.execute(this);
+        threadExecutor.shutdown();
         return true;
     }
 }
