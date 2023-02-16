@@ -7,6 +7,7 @@ import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -68,6 +69,22 @@ public class GroupModel implements Runnable, IMessageEvent {
             "共鸣选哪个", "共鸣选什么", "意识推荐", "什么意识", "武器共鸣", "配队", "意识技能", "用啥意识", "带啥意识");
 
 
+    private static HashMap<String, String> headImageExpMap = new HashMap<>();
+
+    static {
+        headImageExpMap.put("抓", "grab");
+        headImageExpMap.put("拍瓜", "paigua");
+        headImageExpMap.put("顶球", "dingqiu");
+        headImageExpMap.put("咬", "bite");
+        headImageExpMap.put("看这个", "Lookatthis");
+        headImageExpMap.put("保抱肉肉", "baororo");
+        headImageExpMap.put("一起笑", "LaughTogether");
+        headImageExpMap.put("招财猫", "FortuneCat");
+        headImageExpMap.put("舞鸡腿", "DanceChickenLeg");
+        headImageExpMap.put("打年糕", "pound");
+    }
+
+
     /**
      * 记录群员最后一个发言者
      * 用来判断该用户私发连续发送消息,达标则执行某些操作
@@ -115,16 +132,56 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
         }
 
-        if (user_id.equals("2978778354")) {
-            System.out.println(raw_message);
-            System.out.println(dataGroup.getMessage_id());
-            System.out.println(dataGroup.getMessage());
-        }
-
 
         //实现触发某个关键词回复
         if (raw_message.startsWith("菜单")) {
-            SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), CharSequenceUtil.format("菜单\n蓝奏云资源搜索=要搜索的资源"));
+            SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), CharSequenceUtil.format("""
+                    群功能有
+                    翻译+翻译的内容
+                    蓝奏云资源搜索=关键词
+                    解析蓝奏云直链+蓝奏云分享链接
+                    设置当前群聊监听状态
+                    取消当前群聊监听状态
+                    查询当前群聊监听状态
+                    设置当前群聊推送状态
+                    取消当前群聊推送状态
+                    查询当前群聊推送状态
+                    标记当前群聊黑名单状态
+                    取消当前群聊黑名单状态
+                    添加触发复读机关键词=这里填写关键词
+                    移除触发复读机关键词=这里填写关键词
+                    添加复读机成员+艾特成员
+                    移除复读机成员+艾特成员
+                    获取jk图
+                    获取原神图
+                    设置群消息打印在控制台值=这里填写布尔值
+                    抓+艾特成员
+                    拍瓜+艾特成员
+                    顶球+艾特成员
+                    咬+艾特成员
+                    看这个+艾特成员
+                    保抱肉肉+艾特成员
+                    一起笑+艾特成员
+                    招财猫+艾特成员
+                    舞鸡腿+艾特成员
+                    打年糕+艾特成员
+                    其他游戏相关
+                                        
+                    其他的隐藏功能
+                    60秒看世界
+                    刷新复读机成员
+                    打印触发复读机关键词
+                    打印复读机成员
+                    刷新黑名单群聊数据
+                    打印接受推送消息群聊集合
+                    打印监听群聊集合
+                    打印指定群聊监听状态=这里填写群号
+                    打印指定群聊推送状态=这里填写群号
+                    打印群聊黑名单
+                    打印功能权重列表
+                    查询版本信息
+                    私聊窗口复读机                
+                    """));
             return;
         }
         if (InformationUtil.isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message)) {
@@ -132,14 +189,6 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
         if (InformationUtil.isContainsMessAge(PGRModel.getPGR_GUILDID(), raw_message)) {
             PGRModel.printPGRGuild(group_id, user_id);
-            return;
-        }
-        if (raw_message.startsWith("蓝奏云资源搜索=") && boolSupeRuser) {
-            String key = InformationUtil.subEqual("=", raw_message);
-            if (key.isEmpty()) {
-                return;
-            }
-            new LanZuoCloudResourceSearch(key, dataGroup).run();
             return;
         }
         if (raw_message.startsWith("添加复读机成员") && boolSupeRuser) { //需要超级用户权限
@@ -224,12 +273,53 @@ public class GroupModel implements Runnable, IMessageEvent {
             }
         }
         if (raw_message.startsWith("获取原神图")) {
-            String url = DataFile.getRandomKey();
-            JSONObject json = SignalUtil.sendGroupMessage(group_id, CQCode.image(InformationUtil.lastSubEqual("/", url), URLEncodeUtil.encode(url), false));
-            System.out.println(json.toStringPretty());
-            System.out.println("=====================");
+            SignalUtil.sendGroupMessage(group_id, "正在请求中!");
+            JSONArray ban = new JSONArray();
+            for (int i = 0; i < 12; i++) {
+                String url = DataFile.getRandomKey(DataFile.getYS_IMAGE_LIST());
+                ban.add(DataJson.imageUrl(InformationUtil.subEqual("/", url), url, true));
+            }
+            JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeText("机器人", user_id, ban));
+            if (entries.isEmpty()) {
+                log.info("获取原神图出错了!");
+                return;
+            }
+            if (entries.get("retcode", int.class) == 100) {
+                log.info("获取原神图出错了!");
+                SignalUtil.sendGroupMessage(group_id, "获取原神图出错了!");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "获取成功!");
             return;
         }
+        if (raw_message.startsWith("获取腿系列图")) {
+            SignalUtil.sendGroupMessage(group_id, "正在请求腿系列图中!");
+            JSONArray ban = new JSONArray();
+            for (int i = 0; i < 20; i++) {
+                String url = DataFile.getRandomKey(DataFile.getLEG_SERIESL_IST());
+                ban.add(DataJson.imageUrl(InformationUtil.subEqual("/", url), url, true));
+            }
+            JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeText("机器人", dataGroup.getSelf_id(), ban));
+            if (entries.isEmpty()) {
+                log.info("获取腿系列图出错了!");
+                return;
+            }
+            if (entries.get("retcode", int.class) == 100) {
+                log.info("获取腿系列图出错了!");
+                SignalUtil.sendGroupMessage(group_id, "获取腿系列图出错了!");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "获取腿系列图成功!");
+            return;
+        }
+        if (raw_message.startsWith("原神黄历")) {
+            if (SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl("原神黄历", "https://api.xingzhige.com/API/yshl/", false)).isEmpty()) {
+                log.info("原神黄历发送失败");
+                return;
+            }
+            log.info("原神黄历发送失败!");
+        }
+
         if (raw_message.startsWith("翻译")) {
             String subEqual = InformationUtil.subEqual("翻译", raw_message);
             if (subEqual.isEmpty()) {
@@ -265,8 +355,95 @@ public class GroupModel implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id, reply.toString());
             return;
         }
+        if (raw_message.startsWith("获取b站用户信息")) {
+            String subEqual = InformationUtil.subEqual("获取b站用户信息", raw_message);
+            if (subEqual.isEmpty()) {
+                log.info("subEqual获取值失败,为空字符串");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "正在获取!请稍等!");
+            JSONObject uidJson = NetworkUtil.getBiBiUserinfo(subEqual);
+            if (uidJson.isEmpty()) {
+                log.info("biBiUserinfo获取值失败,为空字符串");
+                return;
+            }
+            JSONArray jsonArray = new JSONArray();
+            String biBiUserinfo = NetworkUtil.getBiBiUserinfo(uidJson);
+            String face = uidJson.getByPath("owner.face", String.class);
+            String cover = uidJson.getByPath("live_room.cover", String.class);
+            jsonArray.add(DataJson.at(user_id));
+            jsonArray.add(DataJson.imageUrl("头像", face, false));
+            jsonArray.add(DataJson.text(biBiUserinfo));
+            jsonArray.add(DataJson.imageUrl("直播间封面", cover, false));
+            SignalUtil.sendGroupMessage(group_id, jsonArray.toString());
+            return;
+        }
+        if (raw_message.startsWith("端口扫描")) {
+            String subEqual = InformationUtil.subEqual("端口扫描", raw_message);
+            if (subEqual.isEmpty()) {
+                log.info("subEqual获取值失败,为空字符串");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "正在获取!请稍等!");
+            String portScan = NetworkUtil.portScan(subEqual);
+            if (portScan.isEmpty()) {
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, DataJson.reply(message_id, user_id, portScan).toString());
+        }
+        if (raw_message.startsWith("历史上的今天")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取历史上的今天,请稍等!");
+            JSONObject json = NetworkUtil.getTodayInHistory();
+            if (json.isEmpty()) {
+                return;
+            }
+            if (SignalUtil.sendGroupMessage(group_id, json.get("day", String.class) + "\n" + json.get("content", JSONArray.class).toStringPretty()).isEmpty()) {
+                log.info("历史上的今天获取失败");
+                return;
+            }
+            log.info("历史上的今天获取成功!");
+            return;
+        }
+        if (raw_message.startsWith("获取头像") && boolSupeRuser) {
+            String userATID = InformationUtil.getUserATID(dataGroup);
+            if (userATID.isEmpty()) {
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk=" + userATID + "&s=640]");
+            return;
+        }
+        if (raw_message.startsWith("B站热搜榜")) {
+            JSONObject jsonObject = NetworkUtil.getHotSearchListOfStationB();
+            if (jsonObject.isEmpty()) {
+                return;
+            }
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.add(DataJson.text(jsonObject.get("time", String.class)));
+
+            //DataJson.nodeText("机器人", dataGroup.getSelf_id(), )
 
 
+            //SignalUtil.sendGroupForwardMsg(group_id);
+            return;
+        }
+
+
+        for (String key : headImageExpMap.keySet()) {
+            if (!(raw_message.startsWith(key))) {
+                continue;
+            }
+            String userATID = InformationUtil.getUserATID(dataGroup);
+            if (userATID.isEmpty()) {
+                log.info("获取userATID的值为空字符串");
+                return;
+            }
+            if (SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(userATID, "https://api.xingzhige.com/API/" + headImageExpMap.get(key) + "/?qq=" + userATID, true).toString()).isEmpty()) {
+                log.info("发送" + key + "表情包失败!,at对方=" + userATID);
+                return;
+            }
+            log.info(key + "表情包,发送成功!,at对方=" + userATID);
+            break;
+        }
         if (re_reading_member_set.contains(user_id) || InformationUtil.keyContains(GroupReReadingModel.getKEY_SET(), InformationUtil.filtrationCQ(raw_message))) {
             //复读模块
             GroupReReadingModel re_reading_model = GroupReReadingModel.getRE_READING_MODEL();
@@ -277,14 +454,6 @@ public class GroupModel implements Runnable, IMessageEvent {
             } finally {
                 threadExecutor.shutdown();
             }
-            return;
-        }
-        if (raw_message.startsWith("获取头像") && boolSupeRuser) {
-            String userATID = InformationUtil.getUserATID(dataGroup);
-            if (userATID.isEmpty()) {
-                return;
-            }
-            SignalUtil.sendGroupMessage(group_id, "[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk=" + userATID + "&s=640]");
             return;
         }
         if (raw_message.startsWith("执行demo") && boolSupeRuser) {
@@ -397,7 +566,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
         if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
-            System.out.println("是语音消息!");
+            log.info("是语音消息!");
             return false;
         }
 
