@@ -3,6 +3,7 @@ package com.example.qqbot.Util;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -62,8 +63,9 @@ public class InformationUtil {
      * 获取指定关键词后面的内容
      * 且关键词是最靠前的那一个
      * 如果截取不到或者就是字符串开头第一个则返回空的字符串
-     *关键词和内容相同会返回空字符串
+     * 关键词和内容相同会返回空字符串
      * 获取不到会返回空字符串
+     *
      * @param key 关键词
      * @param str 字符串
      * @return 截取之后的内容
@@ -249,6 +251,18 @@ public class InformationUtil {
             imageList.add(entries);
         }
         return imageList;
+    }
+
+    /**
+     * 判断是否是url链接
+     * @param url url链接
+     * @return 真亦或者假
+     */
+    public static boolean isHttpUrl(String url) {
+        if (HttpUtil.isHttp(url) || HttpUtil.isHttps(url)) {
+            return true;
+        }
+        return false;
     }
 
 
