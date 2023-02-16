@@ -1,5 +1,8 @@
 package com.example.qqbot.Util;
 
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import cn.hutool.http.Method;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -9,6 +12,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -27,13 +31,13 @@ public class SignalUtil {
     /**
      * 空的jsonOBJ对象
      */
+    @Getter
     private static final JSONObject JSONNULL = new JSONObject(0);
 
 
     /**
      * 群消息的终结点
      */
-    @Getter
     private static final String GROUPENDPOINT = "/send_group_msg";
 
 
@@ -56,7 +60,6 @@ public class SignalUtil {
     /**
      * 发送私聊消息
      */
-    @Getter
     private static final String PRIVATEENDPOINT = "/send_private_msg";
 
 
@@ -92,6 +95,13 @@ public class SignalUtil {
      * 用于获取go-cqhttp版本等相关信息
      */
     private static final String GET_VERSION_INFO = "/get_version_info";
+
+
+    private static final HashMap<String, String> headers = new HashMap<>();
+
+    static {
+        headers.put("userAgent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78");
+    }
 
 
     private static JSONObject http(Connection data) {
@@ -148,21 +158,26 @@ public class SignalUtil {
     }
 
 
+
+
     /**
      * 发送消息
      * 发送http post请求
      *
      * @param type      消息通道类型,如群聊私聊等
-     * @param parameter 参数
+     * @param formMap 参数
      * @return jsonOBj对象
      */
-    public static JSONObject httpPost(String type, Map<String, String> parameter) {
-        Connection connection = Jsoup.connect(MailingAddress.SEND_MESSAGE + type)
-                .method(Connection.Method.POST)
-                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
-                .ignoreContentType(true)
-                .data(parameter);
-        return http(connection);
+    public static JSONObject httpPost(String type, Map<String, Object> formMap) {
+        HttpResponse execute = HttpRequest.post(MailingAddress.SEND_MESSAGE + type)
+                .method(Method.POST)
+                .addHeaders(headers)
+                .form(formMap)
+                .execute();
+        if (!(execute.getStatus() == 200)) {
+            return JSONNULL;
+        }
+        return JSONUtil.parseObj(execute.body());
     }
 
 
@@ -209,10 +224,10 @@ public class SignalUtil {
      * @return json对象结果
      */
     public static JSONObject sendGroupMessage(@NonNull String group_id, @NonNull String message) {
-        final Map<String, String> data = new HashMap<>(2);
+        final Map<String, Object> data = new HashMap<>(2);
         data.put("group_id", group_id);
         data.put("message", message);
-        return SignalUtil.httpGet(GROUPENDPOINT, data);
+        return SignalUtil.httpPost(GROUPENDPOINT, data);
     }
 
 
@@ -256,7 +271,7 @@ public class SignalUtil {
      * @return
      */
     public static JSONObject sendPrivateMessage(String user_id, String message) {
-        HashMap<String, String> data = new HashMap<>(2);
+        HashMap<String, Object> data = new HashMap<>(2);
         data.put("user_id", user_id);
         data.put("message", message);
         return SignalUtil.httpPost(PRIVATEENDPOINT, data);
@@ -356,7 +371,7 @@ public class SignalUtil {
      * @return json响应体
      */
     public static JSONObject sendGroupForwardMsg(String group_id, JSONArray jsonArray) {
-        HashMap<String, String> data = new HashMap<>();
+        HashMap<String, Object> data = new HashMap<>();
         data.put("group_id", group_id);
         data.put("messages", jsonArray.toString());
         return httpPost(SEND_GROUP_FORWARD_MSG, data);
