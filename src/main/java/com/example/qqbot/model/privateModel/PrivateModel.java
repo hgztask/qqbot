@@ -1,12 +1,14 @@
-package com.example.qqbot.model;
+package com.example.qqbot.model.privateModel;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
+import com.example.qqbot.Event.Subject;
 import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataPrivate;
 import com.example.qqbot.data.DataUserEights;
+import com.example.qqbot.data.MailingAddress;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.model.group.GroupModel;
 import com.example.qqbot.model.group.ListeningGroupModel;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * 私聊模块逻辑层
@@ -83,6 +86,25 @@ public class PrivateModel implements Runnable, IMessageEvent {
             GroupModel.printBlackGroup(user_id);
             return;
         }
+        if (raw_message.startsWith("打印功能权重列表") && boolSupeRuser) {
+            List<IMessageEvent> list = Subject.getList();
+            JSONObject jsonObject = new JSONObject(list.size());
+            for (IMessageEvent iMessageEvent : list) {
+                jsonObject.set(iMessageEvent.getClass().getName(), iMessageEvent.weight());
+            }
+            SignalUtil.sendPrivateMessage(user_id, "功能类的权重列表(已排序从高到底)" + jsonObject.toStringPretty());
+            log.info("功能类的权重列表(已排序从高到底)" + jsonObject.toStringPretty());
+            return;
+        }
+        if (raw_message.startsWith("查询版本信息") && boolSupeRuser) {
+            JSONObject version_info = SignalUtil.get_version_info();
+            if (version_info.isEmpty()) {
+                log.info("查询版本信息失败,获取到的json对象为空的字段");
+                return;
+            }
+            SignalUtil.sendPrivateMessage(user_id, "版本信息=" + version_info.toStringPretty());
+            log.info("已执行发送版本信息");
+        }
 
         //下面是复读私聊的
         HashMap<String, String> data = new HashMap<>();
@@ -93,7 +115,7 @@ public class PrivateModel implements Runnable, IMessageEvent {
             log.info("发送消息失败!");
             return;
         }
-        log.info("发送成功!:" + json);
+        log.info("私聊发送成功!:" + json);
     }
 
     /**
@@ -124,5 +146,48 @@ public class PrivateModel implements Runnable, IMessageEvent {
         dataPrivate = BeanUtil.toBean(jsonObject, DataPrivate.class);
         run();
         return true;
+    }
+
+    /**
+     * 私聊撤回逻辑层
+     *
+     * @author byhgz
+     * @version 1.0
+     * @date 2023/2/14 16:32
+     */
+    @Slf4j
+    @Component
+    public static class FriendRecallModel implements Runnable, IMessageEvent {
+        /**
+         * 权重,权重高的值会先匹配
+         *
+         * @return 权重值
+         */
+        @Override
+        public int weight() {
+            return 0;
+        }
+
+        /**
+         * 接受消息
+         *
+         * @param jsonObject 原始消息对象
+         * @param message    消息对象
+         * @return 是否匹配成功
+         */
+        @Override
+        public boolean onMessage(JSONObject jsonObject, Message message) {
+            if (!("friend_recall".equals(message.getNotice_type()))) {
+                return false;
+            }
+            //私聊消息撤回
+            log.info("私聊消息撤回了" + jsonObject.toStringPretty());
+            return true;
+        }
+
+        @Override
+        public void run() {
+
+        }
     }
 }
