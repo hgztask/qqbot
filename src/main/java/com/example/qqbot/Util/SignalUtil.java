@@ -1,16 +1,21 @@
 package com.example.qqbot.Util;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.MailingAddress;
+import com.example.qqbot.data.json.DataJson;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -76,6 +81,39 @@ public class SignalUtil {
     private static final String SET_GROUP_WHOLE_BAN = "/set_group_whole_ban";
 
     /**
+     * 获取图片信息终结点
+     */
+    private static final String GET_IMAGE = "/get_image";
+
+    /**
+     * 发送合并转发 ( 群 )
+     */
+    private static final String SEND_GROUP_FORWARD_MSG = "/send_group_forward_msg";
+
+
+    private static JSONObject http(Connection data) {
+        Connection.Response execute;
+        try {
+            execute = data.execute();
+        } catch (IOException e) {
+            log.info("请求execute时出错" + e.getMessage());
+            return JSONNULL;
+        }
+        int code;
+        try {
+            code = execute.statusCode();
+        } catch (Exception e) {
+            log.info("请求状态码异常!" + e.getMessage());
+            return JSONNULL;
+        }
+        if (code != 200) {
+            return JSONNULL;
+        }
+        return JSONUtil.parseObj(execute.body());
+    }
+
+
+    /**
      * get发送消息请求
      *
      * @param type      发送角色,私聊,群聊等
@@ -88,18 +126,7 @@ public class SignalUtil {
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
                 .ignoreContentType(true)
                 .data(parameter);
-        Connection.Response execute;
-        try {
-            execute = data.execute();
-        } catch (IOException e) {
-            log.info("请求execute时出错" + e.getMessage());
-            return JSONNULL;
-        }
-
-        if (execute.statusCode() != 200) {
-            return JSONNULL;
-        }
-        return JSONUtil.parseObj(execute.body());
+        return http(data);
     }
 
     /**
@@ -114,18 +141,7 @@ public class SignalUtil {
                 .method(Connection.Method.GET)
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
                 .ignoreContentType(true);
-        Connection.Response execute;
-        try {
-            execute = connection.execute();
-        } catch (IOException e) {
-            log.info("请求execute时出错" + e.getMessage());
-            return JSONNULL;
-        }
-        int code = execute.statusCode();
-        if (code != 200) {
-            return JSONNULL;
-        }
-        return JSONUtil.parseObj(execute.body());
+        return http(connection);
     }
 
 
@@ -143,25 +159,27 @@ public class SignalUtil {
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
                 .ignoreContentType(true)
                 .data(parameter);
-        Connection.Response execute;
-        try {
-            execute = connection.execute();
-        } catch (IOException e) {
-            log.info("请求execute时出错" + e.getMessage());
-            return JSONNULL;
-        }
-        int code;
-        try {
-            code = execute.statusCode();
-        } catch (Exception e) {
-            log.info("请求状态码异常!" + e.getMessage());
-            return JSONNULL;
-        }
-        if (code != 200) {
-            return JSONNULL;
-        }
+        return http(connection);
+    }
 
-        return JSONUtil.parseObj(execute.body());
+
+    /**
+     * 发送消息
+     * 发送http post请求
+     *
+     * @param type      消息通道类型,如群聊私聊等
+     * @param parameter 参数
+     * @return jsonOBj对象
+     */
+    public static JSONObject httpPost(String type, String... parameter) {
+        Connection connection = Jsoup.connect(MailingAddress.SEND_MESSAGE + type)
+                .method(Connection.Method.POST)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
+                .ignoreContentType(true)
+                .data(parameter);
+        return http(connection);
+
+
     }
 
 
@@ -190,7 +208,7 @@ public class SignalUtil {
      * @return json对象
      */
     public static JSONObject getGroupInfo(String group_id, boolean no_cache) {
-        return  httpGet(GROUP_INFO_ENDPOINT,"?group_id="+group_id+"&no_cache="+no_cache);
+        return httpGet(GROUP_INFO_ENDPOINT, "?group_id=" + group_id + "&no_cache=" + no_cache);
     }
 
 
@@ -223,7 +241,7 @@ public class SignalUtil {
         HashMap<String, String> data = new HashMap<>(2);
         data.put("user_id", user_id);
         data.put("message", message);
-        return SignalUtil.httpGet(PRIVATEENDPOINT, data);
+        return SignalUtil.httpPost(PRIVATEENDPOINT, data);
     }
 
 
@@ -273,5 +291,58 @@ public class SignalUtil {
     public static JSONObject set_group_whole_ban(String group_id, boolean enable) {
         return SignalUtil.httpGet(SET_GROUP_WHOLE_BAN, "?group_id=" + group_id + "&enable=" + enable);
     }
+
+
+    /**
+     * 获取图片消息
+     *
+     * @param fileName 图片缓存文件名
+     * @return jsonobj对象
+     */
+    public static JSONObject getImage(String fileName) {
+        return SignalUtil.httpPost(GET_IMAGE, "file=" + fileName);
+    }
+
+
+    /**
+     * jsoupHttpGet的请求
+     *
+     * @param url             请求的url
+     * @param followRedirects 是否跟随重定向
+     * @return 响应体
+     */
+    public static Connection.Response jsoupHttpGet(String url, boolean followRedirects) {
+        Connection.Response execute;
+        try {
+            execute = Jsoup.connect(url)
+                    .method(Connection.Method.GET)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
+                    .ignoreContentType(true)
+                    .followRedirects(followRedirects)
+                    .execute();
+        } catch (IOException e) {
+            System.out.println("jsoupHttpGet请求出错!" + e.getMessage());
+            return null;
+            //throw new RuntimeException(e);
+        }
+        return execute;
+    }
+
+
+    /**
+     * 发送合并转发 ( 群 )消息
+     * 目前测试貌似是最多10条消息合并成聊天记录
+     *
+     * @param group_id  发送给的群号
+     * @param jsonArray 消息内容,内容内每一个元素对应一条消息
+     * @return json响应体
+     */
+    public static JSONObject sendGroupForwardMsg(String group_id, JSONArray jsonArray) {
+        HashMap<String, String> data = new HashMap<>();
+        data.put("group_id", group_id);
+        data.put("messages", jsonArray.toString());
+        return httpPost(SEND_GROUP_FORWARD_MSG, data);
+    }
+
 
 }
