@@ -8,15 +8,13 @@ import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataPrivate;
 import com.example.qqbot.data.DataUserEights;
-import com.example.qqbot.data.MailingAddress;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.model.group.GroupModel;
-import com.example.qqbot.model.group.ListeningGroupModel;
 import com.example.qqbot.model.group.GroupReReadingModel;
+import com.example.qqbot.model.group.ListeningGroupModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -107,10 +105,7 @@ public class PrivateModel implements Runnable, IMessageEvent {
         }
 
         //下面是复读私聊的
-        HashMap<String, String> data = new HashMap<>();
-        data.put("user_id", dataPrivate.getUser_id());
-        data.put("message", message);
-        JSONObject json = SignalUtil.httpGet(SignalUtil.getPRIVATEENDPOINT(), data);
+        JSONObject json = SignalUtil.sendPrivateMessage(user_id, message);
         if (json.isEmpty()) {
             log.info("发送消息失败!");
             return;
@@ -141,53 +136,9 @@ public class PrivateModel implements Runnable, IMessageEvent {
             //如果不是私聊消息
             return false;
         }
-
         //获取私聊消息数据
         dataPrivate = BeanUtil.toBean(jsonObject, DataPrivate.class);
         run();
         return true;
-    }
-
-    /**
-     * 私聊撤回逻辑层
-     *
-     * @author byhgz
-     * @version 1.0
-     * @date 2023/2/14 16:32
-     */
-    @Slf4j
-    @Component
-    public static class FriendRecallModel implements Runnable, IMessageEvent {
-        /**
-         * 权重,权重高的值会先匹配
-         *
-         * @return 权重值
-         */
-        @Override
-        public int weight() {
-            return 0;
-        }
-
-        /**
-         * 接受消息
-         *
-         * @param jsonObject 原始消息对象
-         * @param message    消息对象
-         * @return 是否匹配成功
-         */
-        @Override
-        public boolean onMessage(JSONObject jsonObject, Message message) {
-            if (!("friend_recall".equals(message.getNotice_type()))) {
-                return false;
-            }
-            //私聊消息撤回
-            log.info("私聊消息撤回了" + jsonObject.toStringPretty());
-            return true;
-        }
-
-        @Override
-        public void run() {
-
-        }
     }
 }
