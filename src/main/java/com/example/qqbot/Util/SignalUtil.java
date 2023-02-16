@@ -4,18 +4,14 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.MailingAddress;
-import com.example.qqbot.data.json.DataJson;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -91,6 +87,13 @@ public class SignalUtil {
     private static final String SEND_GROUP_FORWARD_MSG = "/send_group_forward_msg";
 
 
+    /**
+     * 获取版本信息
+     * 用于获取go-cqhttp版本等相关信息
+     */
+    private static final String GET_VERSION_INFO = "/get_version_info";
+
+
     private static JSONObject http(Connection data) {
         Connection.Response execute;
         try {
@@ -159,6 +162,21 @@ public class SignalUtil {
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
                 .ignoreContentType(true)
                 .data(parameter);
+        return http(connection);
+    }
+
+
+    /**
+     * 发送http post请求
+     *
+     * @param type 消息通道类型,如群聊私聊等
+     * @return jsonobj对象
+     */
+    public static JSONObject httpPost(String type) {
+        Connection connection = Jsoup.connect(MailingAddress.SEND_MESSAGE + type)
+                .method(Connection.Method.POST)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.78")
+                .ignoreContentType(true);
         return http(connection);
     }
 
@@ -342,6 +360,16 @@ public class SignalUtil {
         data.put("group_id", group_id);
         data.put("messages", jsonArray.toString());
         return httpPost(SEND_GROUP_FORWARD_MSG, data);
+    }
+
+
+    /**
+     * 获取机器人运行环境版本信息
+     *
+     * @return jsonobj对象
+     */
+    public static JSONObject get_version_info() {
+        return httpPost(GET_VERSION_INFO);
     }
 
 
