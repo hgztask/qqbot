@@ -168,8 +168,8 @@ public class Day60World implements Runnable, IMessageEvent {
         if (!("group".equals(message.getMessage_type()))) {
             return false;
         }
-        this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
-        this.run();
+        //this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
+        //this.run();
         return false;
     }
 }
