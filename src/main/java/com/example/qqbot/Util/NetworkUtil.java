@@ -145,12 +145,12 @@ public class NetworkUtil {
         return response.body();
     }
 
-    /**
-     * 获取随机谜语
-     * @return jsonobj对象
-     */
-    public static JSONObject riddle() {
-        Connection.Response response = SignalUtil.jsoupHttpGet("https://v.api.aa1.cn/api/api-miyu/index.php", false);
+
+
+
+
+    private  static JSONObject httpResponse(String url){
+        Connection.Response response = SignalUtil.jsoupHttpGet(url, false);
         if (response == null || response.statusCode() != 200) {
             return SignalUtil.getJSONNULL();
         }
@@ -158,13 +158,52 @@ public class NetworkUtil {
         if (!(JSONUtil.isTypeJSONObject(body))) {
             return SignalUtil.getJSONNULL();
         }
-        JSONObject jsonObject = JSONUtil.parseObj(body);
+        return JSONUtil.parseObj(body);
+    }
+
+
+    /**
+     * 获取随机谜语
+     * @return jsonobj对象
+     */
+    public static JSONObject riddle() {
+        JSONObject jsonObject = httpResponse("https://v.api.aa1.cn/api/api-miyu/index.php");
         String code = jsonObject.get("code", String.class);
         if (!("1".equals(code))) {
             return SignalUtil.getJSONNULL();
         }
         return jsonObject;
     }
+
+
+    /**
+     * 获取历史上的今天
+     * @return json对象
+     */
+    public static JSONObject getTodayInHistory(){
+        JSONObject jsonObject = httpResponse("https://zj.v.api.aa1.cn/api/bk/?num=5&type=json");
+        Integer code = jsonObject.get("code", int.class);
+        if (code==null||code!=200) {
+            return SignalUtil.getJSONNULL();
+        }
+        return jsonObject;
+    }
+
+
+    /**
+     * 获取B站热搜榜
+     * @return json对象
+     */
+    public static JSONObject getHotSearchListOfStationB(){
+        JSONObject jsonObject = httpResponse("https://v.api.aa1.cn/api/bilibili-rs/");
+        Integer code = jsonObject.get("code", int.class);
+        if (code==null||code!=1) {
+            return SignalUtil.getJSONNULL();
+        }
+        return jsonObject;
+    }
+
+
 
 
 }

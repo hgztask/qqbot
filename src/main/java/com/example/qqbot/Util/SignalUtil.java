@@ -160,6 +160,7 @@ public class SignalUtil {
 
 
 
+
     /**
      * 发送消息
      * 发送http post请求
@@ -228,6 +229,16 @@ public class SignalUtil {
         data.put("group_id", group_id);
         data.put("message", message);
         return SignalUtil.httpPost(GROUPENDPOINT, data);
+    }
+
+    /**
+     * 机器人发送群消息
+     * @param group_id 群号
+     * @param message 消息内容
+     * @return json对象结果
+     */
+    public static JSONObject sendGroupMessage(@NonNull String group_id, @NonNull JSONObject message) {
+        return sendGroupMessage(group_id, message.toString());
     }
 
 

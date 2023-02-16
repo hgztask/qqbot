@@ -5,7 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.example.qqbot.Util.SignalUtil;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author byhgz
@@ -27,6 +27,18 @@ public class DataJson {
         return jsonObject;
     }
 
+    /**
+     * json样式文本
+     *
+     * @param text 显示的文本内容
+     * @return
+     */
+    public static JSONObject text(StringBuilder text) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.set("type", "text");
+        jsonObject.set("data", new JSONObject().set("text", text));
+        return jsonObject;
+    }
 
     /**
      * 回复引用消息
@@ -59,7 +71,6 @@ public class DataJson {
         jsonArray.add(text(content));
         return jsonArray;
     }
-
 
     /**
      * 生成json样式的at对象
@@ -108,7 +119,6 @@ public class DataJson {
         return jsonObject;
     }
 
-
     /**
      * node顶部节点,需要配合nodeData节点使用
      *
@@ -155,20 +165,22 @@ public class DataJson {
      *
      * @param name      显示昵称
      * @param user_id   对应的QQ号,可以不填写真实的,或者任意数字
-     * @param imageList 消息的内容列表
+     * @param collection 消息的内容列表
      * @return
      */
-    public static JSONArray nodeText(String name, String user_id, List<String> imageList) {
-        JSONArray jsonArray = new JSONArray(imageList.size());
-        for (String s : imageList) {
+    public static JSONArray nodeText(String name, String user_id, Collection<?> collection) {
+        JSONArray jsonArray = new JSONArray(collection.size());
+        for (Object o : collection) {
             JSONObject node = DataJson.node();
             JSONObject nodeData = DataJson.nodeData(name, user_id);
             node.set("data", nodeData);
-            nodeData.set("content", s);
+            nodeData.set("content", o);
             jsonArray.add(node);
         }
         return jsonArray;
     }
+
+
 
 
 }
