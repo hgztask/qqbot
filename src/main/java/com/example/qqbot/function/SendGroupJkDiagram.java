@@ -3,23 +3,17 @@ package com.example.qqbot.function;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.SignalUtil;
-import com.example.qqbot.data.CQ.CQCode;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.json.DataJson;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
-import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -89,41 +83,41 @@ public class SendGroupJkDiagram implements Runnable, IMessageEvent {
      *
      * @return 图片cq码
      */
-    public static String getJKImageCQ() {
+    public static JSONObject getJKImageCQ() {
         Connection.Response response = SignalUtil.jsoupHttpGet("http://www.ggapi.cn/api/jkzf", false);
+        JSONObject jsonnull = SignalUtil.getJSONNULL();
         if (response == null) {
             log.info("请求失败了!");
-            return "";
+            return jsonnull;
         }
         String location = response.header("Location");
         if (location == null) {
             log.info("获取响应体的Location值失败");
-            return "";
+            return jsonnull;
         }
         String fileName = InformationUtil.lastSubEqual("/", location);
         if (fileName.isEmpty()) {
             fileName = "jk图";
         }
-        return CQCode.image(fileName, location, true);
+        return DataJson.imageUrl(fileName, location, true);
     }
 
     @Override
     public void run() {
         String group_id = dataGroup.getGroup_id();
         SignalUtil.sendGroupMessage(group_id, "正在请求jk图!,请稍等!");
-        ArrayList<String> arrayList = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            arrayList.add(getJKImageCQ());
+        JSONArray array = new JSONArray();
+        for (int i = 0; i < 30; i++) {
+            array.add(getJKImageCQ());
         }
-        if (arrayList.isEmpty()) {
+        if (array.isEmpty()) {
             log.info("jsonArray CQ方法返回结果为空列表!");
             return;
         }
-        JSONArray jsonArray = DataJson.nodeText("机器人", dataGroup.getUser_id(), arrayList);
-        SignalUtil.sendGroupForwardMsg(group_id, jsonArray);
+        SignalUtil.sendGroupForwardMsg(group_id,  DataJson.nodeText("机器人", dataGroup.getUser_id(), array));
         //执行完就移除对应的Q群群聊
         SET_GROUP.remove(group_id);
-        SignalUtil.sendGroupMessage(group_id, "本轮请求完成!");
+        SignalUtil.sendGroupMessage(group_id, "获取jk图-本轮请求完成!");
     }
 
 
