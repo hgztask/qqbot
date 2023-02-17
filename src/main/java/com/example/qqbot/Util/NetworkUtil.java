@@ -1,9 +1,12 @@
 package com.example.qqbot.Util;
 
+import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.data.json.DataJson;
 import org.jsoup.Connection;
 
 /**
@@ -25,7 +28,7 @@ public class NetworkUtil {
     public static JSONObject translate(String content) {
         Connection.Response response = SignalUtil.jsoupHttpGet("http://www.ggapi.cn/api/fanyi?type=AUTO&city=" + content, false);
         if (response.statusCode() != 200) {
-            return SignalUtil.getJSONNULL();
+            return SignalUtil.getJSONOBJNULL();
         }
         return JSONUtil.parseObj(response.body());
     }
@@ -68,7 +71,7 @@ public class NetworkUtil {
      * @return jsonobj对象
      */
     public static JSONObject getBiBiUserinfo(String uid) {
-        JSONObject jsonnull = SignalUtil.getJSONNULL();
+        JSONObject jsonnull = SignalUtil.getJSONOBJNULL();
         Connection.Response response = SignalUtil.jsoupHttpGet("https://api.xingzhige.com/API/b_personal/?mid=" + uid, false);
         if (response.statusCode() != 200) {
             return jsonnull;
@@ -146,17 +149,14 @@ public class NetworkUtil {
     }
 
 
-
-
-
-    private  static JSONObject httpResponse(String url){
+    private static JSONObject httpResponse(String url) {
         Connection.Response response = SignalUtil.jsoupHttpGet(url, false);
         if (response == null || response.statusCode() != 200) {
-            return SignalUtil.getJSONNULL();
+            return SignalUtil.getJSONOBJNULL();
         }
         String body = response.body();
         if (!(JSONUtil.isTypeJSONObject(body))) {
-            return SignalUtil.getJSONNULL();
+            return SignalUtil.getJSONOBJNULL();
         }
         return JSONUtil.parseObj(body);
     }
@@ -164,13 +164,14 @@ public class NetworkUtil {
 
     /**
      * 获取随机谜语
+     *
      * @return jsonobj对象
      */
     public static JSONObject riddle() {
         JSONObject jsonObject = httpResponse("https://v.api.aa1.cn/api/api-miyu/index.php");
         String code = jsonObject.get("code", String.class);
         if (!("1".equals(code))) {
-            return SignalUtil.getJSONNULL();
+            return SignalUtil.getJSONOBJNULL();
         }
         return jsonObject;
     }
@@ -178,13 +179,14 @@ public class NetworkUtil {
 
     /**
      * 获取历史上的今天
+     *
      * @return json对象
      */
-    public static JSONObject getTodayInHistory(){
+    public static JSONObject getTodayInHistory() {
         JSONObject jsonObject = httpResponse("https://zj.v.api.aa1.cn/api/bk/?num=5&type=json");
         Integer code = jsonObject.get("code", int.class);
-        if (code==null||code!=200) {
-            return SignalUtil.getJSONNULL();
+        if (code == null || code != 200) {
+            return SignalUtil.getJSONOBJNULL();
         }
         return jsonObject;
     }
@@ -192,18 +194,112 @@ public class NetworkUtil {
 
     /**
      * 获取B站热搜榜
+     *
      * @return json对象
      */
-    public static JSONObject getHotSearchListOfStationB(){
+    public static JSONArray getHotSearchListOfStationB(String user_id) {
         JSONObject jsonObject = httpResponse("https://v.api.aa1.cn/api/bilibili-rs/");
         Integer code = jsonObject.get("code", int.class);
-        if (code==null||code!=1) {
-            return SignalUtil.getJSONNULL();
+        if (code == null || code != 1) {
+            return SignalUtil.getJSONARRNULL();
         }
-        return jsonObject;
+        JSONArray nodeArr = new JSONArray();
+        nodeArr.add(DataJson.text(jsonObject.get("time", String.class)));
+        JSONArray data = jsonObject.get("data", JSONArray.class);
+        for (Object obj : data) {
+            JSONObject datum = JSONUtil.parseObj(obj);
+            String title = datum.get("title", String.class);
+            String heat = datum.get("heat", String.class);
+            String link = datum.get("link", String.class);
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("标题:" + title + "\n");
+            stringBuilder.append("热度:" + heat + "\n");
+            stringBuilder.append("传送门:" + link);
+            nodeArr.add(DataJson.text(stringBuilder));
+        }
+        return DataJson.nodeText("机器人", user_id, nodeArr);
+    }
+
+    /**
+     * 获取微博热搜
+     *
+     * @param user_id 聊天记录发言人
+     * @return jsonarr对象
+     */
+    public static JSONArray weiboHotSearchList(String user_id) {
+        JSONObject jsonObject = httpResponse("https://zj.v.api.aa1.cn/api/weibo-rs/");
+        Integer code = jsonObject.get("code", int.class);
+        if (code == null || code != 1) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        JSONArray data = jsonObject.get("data", JSONArray.class);
+        JSONArray nodeArr = new JSONArray();
+        for (Object obj : data) {
+            JSONObject datum = JSONUtil.parseObj(obj);
+            String title = datum.get("title", String.class);
+            String hot = datum.get("hot", String.class);
+            String url = datum.get("url", String.class);
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("标题:" + title + "\n");
+            stringBuilder.append("热度:" + hot + "\n");
+            stringBuilder.append("传送门:" + URLEncodeUtil.encode(url));
+            nodeArr.add(DataJson.text(stringBuilder));
+        }
+        return DataJson.nodeText("机器人", user_id, nodeArr);
     }
 
 
+    /**
+     * 获取每日60秒看世界图片
+     *
+     * @param file 存储文件名
+     * @return jsonObj对象
+     */
+    public static JSONObject getDay60World(String file) {
+        return DataJson.imageUrl(file, "https://zj.v.api.aa1.cn/api/60s-old/", false);
+    }
+
+
+    /**
+     * 获取人生倒计时内容
+     *
+     * @return 字符串结果
+     */
+    public static String getCountdownToLife() {
+        JSONObject jsonObject = httpResponse("https://v.api.aa1.cn/api/rsdjs/");
+        Integer code = jsonObject.get("code", int.class);
+        if (code == null || code != 200) {
+            return "";
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("\n" + jsonObject.get("month") + "\n");
+        stringBuilder.append(jsonObject.get("week") + "\n");
+        stringBuilder.append(jsonObject.get("day") + "\n");
+        stringBuilder.append(jsonObject.get("time"));
+        return stringBuilder.toString();
+    }
+
+
+    /**
+     * 获取疯狂星期四文案
+     *
+     * @return 文案内容
+     */
+    public static String getCrazyThursdayCopywriting() {
+        JSONObject jsonObject = httpResponse("https://api.wqwlkj.cn/wqwlapi/kfcyl.php?type=json");
+        if (jsonObject.isEmpty()) {
+            return "";
+        }
+        Integer code = jsonObject.get("code", int.class);
+        if (code == null || code != 1) {
+            return "";
+        }
+        String msg = jsonObject.get("msg", String.class);
+        if (msg == null) {
+            return "";
+        }
+        return msg;
+    }
 
 
 }
