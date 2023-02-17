@@ -2,7 +2,6 @@ package com.example.qqbot.Util;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -47,6 +46,33 @@ public class InformationUtil {
         }
         return qqIndex;
     }
+
+
+    /**
+     * 获取消息中的所有指定类型元素对象
+     * @param type  指定类型
+     * @param jsonArray messageJson对象
+     * @return 对应类型元素集合
+     */
+    public static @NonNull JSONArray getMessageTypeList(@NonNull String type,@NonNull JSONArray jsonArray) {
+        JSONArray typeJsonArray = new JSONArray();
+        List<String> typeList = jsonArray.getByPath("type", List.class);
+        if (typeList == null || typeList.isEmpty()) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        for (int i = 0; i < typeList.size(); i++) {
+            if (!(type.equals(typeList.get(i)))) {
+                continue;
+            }
+            typeJsonArray.add(jsonArray.get(i));
+        }
+        if (typeJsonArray.isEmpty()) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        return typeJsonArray;
+    }
+
+
 
     /**
      * 取被艾特方的QQ号码
@@ -255,6 +281,7 @@ public class InformationUtil {
 
     /**
      * 判断是否是url链接
+     *
      * @param url url链接
      * @return 真亦或者假
      */
