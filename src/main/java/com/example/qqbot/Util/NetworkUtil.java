@@ -8,6 +8,12 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.json.DataJson;
 import org.jsoup.Connection;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 网络api封装工具
@@ -299,6 +305,115 @@ public class NetworkUtil {
             return "";
         }
         return msg;
+    }
+
+
+    /**
+     * 针对于该wqwlkjapi接口内获取json中的url做个封装,对应的接口传入对应的url即可
+     *
+     * @return 表情包url
+     */
+    public static String getWqwlkjImageUrl(String url) {
+        JSONObject jsonObject = httpResponse(url);
+        if (jsonObject.isEmpty()) {
+            return "";
+        }
+        Integer code = jsonObject.get("code", int.class);
+        if (code == null || code != 1) {
+            return "";
+        }
+        String img = jsonObject.get("img", String.class);
+        if (img == null) {
+            return "";
+        }
+        return img;
+    }
+
+    /**
+     * 获取指定用户动态信息
+     *
+     * @param uid 用户uid
+     * @return jso动态内容和图片
+     */
+    public static JSONArray getAnalyzeTheDynamicApiOfStation(String uid) {
+        JSONArray jsonArrNull = new JSONArray(0);
+        JSONObject readJSONObject = JSONUtil.readJSONObject(new File("E:\\space_history.json"), StandardCharsets.UTF_8);
+        //JSONObject readJSONObject = httpResponse("https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history?host_uid=" + uid);
+        Integer code = readJSONObject.get("code", int.class);
+        if (code == null || code != 0) {
+            System.out.println("code错误!");
+            return jsonArrNull;
+        }
+        JSONArray jsonArray = readJSONObject.getByPath("data.cards", JSONArray.class);
+        if (jsonArray == null || jsonArray.isEmpty()) {
+            return jsonArrNull;
+        }
+        ArrayList<JSONObject> dtArr = new ArrayList<>();
+        for (Object o : jsonArray) {
+            JSONObject item = JSONUtil.parseObj(o);
+            JSONObject card = item.getByPath("card", JSONObject.class);
+            if (card == null || card.isEmpty()) {
+                continue;
+            }
+            dtArr.add(card);
+        }
+        JSONArray dtComtentArr = new JSONArray();
+        for (JSONObject jsonObject : dtArr) {
+            //动态类型是用户主动单独发的动态的,而非是回复动态
+            String cdescription = jsonObject.getByPath("item.description", String.class);
+            //动态的图片
+            JSONArray pictures = jsonObject.getByPath("item.pictures", JSONArray.class);
+            //动态类型是回复了对方的得类似于转发回复
+            //String content = jsonObject.getByPath("item.content", String.class);
+            //JSONObject origin = jsonObject.getByPath("origin", JSONObject.class);
+            if (cdescription == null) {
+                continue;
+            }
+            JSONObject dtMap = new JSONObject();
+            dtMap.set("textContent", cdescription);
+            JSONArray img_src = pictures.getByPath("img_src", JSONArray.class);
+            if (img_src == null || img_src.isEmpty()) {
+                continue;
+            }
+            dtMap.set("img_src", img_src);
+            dtComtentArr.add(dtMap);
+        }
+        return dtComtentArr;
+    }
+
+
+    @Test
+    void test0() {
+        String group_id = "528828094";
+        JSONArray station = NetworkUtil.getAnalyzeTheDynamicApiOfStation("");
+        if (station.isEmpty()) {
+            return;
+        }
+        //消息个数的集合
+        JSONArray jsonArray = new JSONArray();
+        JSONObject item = JSONUtil.parseObj(station.get(0));
+
+        String textContent = item.get("textContent", String.class);
+        List<String> img_srcList = item.get("img_src", List.class);
+        jsonArray.add(DataJson.text(textContent));
+        for (String s : img_srcList) {
+            jsonArray.add(DataJson.imageUrl(InformationUtil.subEqual("/", s), s, true));
+        }
+
+
+
+        SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeText("机器人","2978778354",jsonArray));
+        //SignalUtil.sendGroupMessage(group_id, "获取成功!");
+
+
+    }
+
+    @Test
+    void test1() {
+        String str = "#战双帕弥什# \r\n★浮英枕梦行 | 怪物图鉴★\r\n\n已编入「浮英枕梦行」版本作战映像，新增[茯神][守门人][求道者][石镇 捌型]档案记录，可供指挥官查阅。\r\n\n庄严无害的外表下，隐匿着不经意的杀机；现实与梦境之间的门扉，或许在过去就已被推开。";
+        str = "你好";
+        System.out.println(str.replaceAll("\r\n|\r|\n", "\n"));//取出所有換行 和回车
+
     }
 
 
