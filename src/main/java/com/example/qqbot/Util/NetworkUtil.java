@@ -337,8 +337,7 @@ public class NetworkUtil {
      */
     public static JSONArray getAnalyzeTheDynamicApiOfStation(String uid) {
         JSONArray jsonArrNull = new JSONArray(0);
-        JSONObject readJSONObject = JSONUtil.readJSONObject(new File("E:\\space_history.json"), StandardCharsets.UTF_8);
-        //JSONObject readJSONObject = httpResponse("https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history?host_uid=" + uid);
+        JSONObject readJSONObject = httpResponse("https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history?host_uid=" + uid);
         Integer code = readJSONObject.get("code", int.class);
         if (code == null || code != 0) {
             System.out.println("code错误!");
@@ -382,39 +381,6 @@ public class NetworkUtil {
     }
 
 
-    @Test
-    void test0() {
-        String group_id = "528828094";
-        JSONArray station = NetworkUtil.getAnalyzeTheDynamicApiOfStation("");
-        if (station.isEmpty()) {
-            return;
-        }
-        //消息个数的集合
-        JSONArray jsonArray = new JSONArray();
-        JSONObject item = JSONUtil.parseObj(station.get(0));
-
-        String textContent = item.get("textContent", String.class);
-        List<String> img_srcList = item.get("img_src", List.class);
-        jsonArray.add(DataJson.text(textContent));
-        for (String s : img_srcList) {
-            jsonArray.add(DataJson.imageUrl(InformationUtil.subEqual("/", s), s, true));
-        }
-
-
-
-        SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeText("机器人","2978778354",jsonArray));
-        //SignalUtil.sendGroupMessage(group_id, "获取成功!");
-
-
-    }
-
-    @Test
-    void test1() {
-        String str = "#战双帕弥什# \r\n★浮英枕梦行 | 怪物图鉴★\r\n\n已编入「浮英枕梦行」版本作战映像，新增[茯神][守门人][求道者][石镇 捌型]档案记录，可供指挥官查阅。\r\n\n庄严无害的外表下，隐匿着不经意的杀机；现实与梦境之间的门扉，或许在过去就已被推开。";
-        str = "你好";
-        System.out.println(str.replaceAll("\r\n|\r|\n", "\n"));//取出所有換行 和回车
-
-    }
 
 
 }
