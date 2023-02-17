@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Random;
 
 /**
  * Ikun小黑子模块
@@ -33,7 +32,7 @@ public class IkunModel implements Runnable, IMessageEvent {
     /**
      * 坤坤关键词
      */
-    private static final List<String> IKUNLISET = ListUtil.toList("ikun", "小黑子", "IKUN", "食不食油饼", "鸡哥", "坤", "你干嘛");
+    private static final List<String> IKUNLISET = ListUtil.toList("ikun", "小黑子", "IKUN", "食不食油饼", "鸡哥", "坤", "你干嘛","球");
 
 
     /**
@@ -71,7 +70,7 @@ public class IkunModel implements Runnable, IMessageEvent {
     @Override
     public void run() {
         String group_id = dataGroup.getGroup_id();
-        String ikunImageUrl = NetworkUtil.getIkunImageUrl();
+        String ikunImageUrl = NetworkUtil.getWqwlkjImageUrl("https://api.wqwlkj.cn/wqwlapi/ikun.php?type=json&lx=bqb");
         if (ikunImageUrl.isEmpty()) {
             return;
         }
