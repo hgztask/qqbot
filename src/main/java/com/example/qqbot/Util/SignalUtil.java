@@ -12,7 +12,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -32,7 +31,13 @@ public class SignalUtil {
      * 空的jsonOBJ对象
      */
     @Getter
-    private static final JSONObject JSONNULL = new JSONObject(0);
+    private static final JSONObject JSONOBJNULL = new JSONObject(0);
+
+    /**
+     * 空的jsonarr对象
+     */
+    @Getter
+    private static final JSONArray JSONARRNULL = new JSONArray(0);
 
 
     /**
@@ -89,6 +94,11 @@ public class SignalUtil {
      */
     private static final String SEND_GROUP_FORWARD_MSG = "/send_group_forward_msg";
 
+    /**
+     * 发送合并转发 ( 好友 )终结点
+     */
+    private static final String SEND_PRIVATE_FORWARD_MSG = "/send_private_forward_msg";
+
 
     /**
      * 获取版本信息
@@ -110,17 +120,17 @@ public class SignalUtil {
             execute = data.execute();
         } catch (IOException e) {
             log.info("请求execute时出错" + e.getMessage());
-            return JSONNULL;
+            return JSONOBJNULL;
         }
         int code;
         try {
             code = execute.statusCode();
         } catch (Exception e) {
             log.info("请求状态码异常!" + e.getMessage());
-            return JSONNULL;
+            return JSONOBJNULL;
         }
         if (code != 200) {
-            return JSONNULL;
+            return JSONOBJNULL;
         }
         return JSONUtil.parseObj(execute.body());
     }
@@ -158,14 +168,11 @@ public class SignalUtil {
     }
 
 
-
-
-
     /**
      * 发送消息
      * 发送http post请求
      *
-     * @param type      消息通道类型,如群聊私聊等
+     * @param type    消息通道类型,如群聊私聊等
      * @param formMap 参数
      * @return jsonOBj对象
      */
@@ -176,7 +183,7 @@ public class SignalUtil {
                 .form(formMap)
                 .execute();
         if (!(execute.getStatus() == 200)) {
-            return JSONNULL;
+            return JSONOBJNULL;
         }
         return JSONUtil.parseObj(execute.body());
     }
@@ -232,12 +239,35 @@ public class SignalUtil {
     }
 
     /**
+     * 机器人发送群消息 发送到的群时默认的群聊 文件群（放文件）
+     *
+     * @param message 内容
+     * @return
+     */
+    public static JSONObject sendGroupMessage(@NonNull String message) {
+        return sendGroupMessage("528828094", message);
+    }
+
+
+    /**
      * 机器人发送群消息
+     *
      * @param group_id 群号
-     * @param message 消息内容
+     * @param message  消息内容
      * @return json对象结果
      */
     public static JSONObject sendGroupMessage(@NonNull String group_id, @NonNull JSONObject message) {
+        return sendGroupMessage(group_id, message.toString());
+    }
+
+    /**
+     * 机器人发送一条群消息
+     *
+     * @param group_id 群号
+     * @param message  由json样式的类型组合成一条消息
+     * @return json对象结果
+     */
+    public static JSONObject sendGroupMessage(@NonNull String group_id, @NonNull JSONArray message) {
         return sendGroupMessage(group_id, message.toString());
     }
 
@@ -375,10 +405,44 @@ public class SignalUtil {
 
     /**
      * 发送合并转发 ( 群 )消息
-     * 目前测试貌似是最多10条消息合并成聊天记录
+     * 目前测试貌似是最多200条消息合并成聊天记录
+     * 不过要求每条消息字符内容不要太多
+     * <p>
+     * 使用方法
+     * <p>
+     * 存储每条消息的集合
+     * <p>
+     * JSONArray jsonArray = new JSONArray();
+     * <p>
+     * 单独添加一条消息
+     * <p>
+     * jsonArray.add(DataJson.text("最新番剧"));
+     * <p>
+     * 一条消息中有的元素/内容-每条消息的样式集合
+     * JSONArray item = new JSONArray();
+     * <p>
+     * 向该条消息中添加文本
+     * item.add(DataJson.text("你好我是文本"));
+     * <p>
+     * 继续追加图片内容至对应消息
+     * <p>
+     * 对该消息类进行追加图片
+     * item.add(DataJson.imageUrl("file","https/..xxxxxxjpg", true));
+     * <p>
+     * 向该条消息中追加添加文本
+     * item.add(DataJson.text("我是追加的文本"));
+     * <p>
+     * 本条消息添加进去聊天记录集合
+     * jsonArray.add(item);
+     * <p>
+     * 并消息成合并聊天记录
+     * JSONArray nodeMerge = DataJson.nodeMerge("发送者昵称", "QQ号/可不填写真实", jsonArray);
+     * <p>
+     * 发送合并转发(群)消息
+     * SignalUtil.sendGroupForwardMsg(nodeMerge);
      *
      * @param group_id  发送给的群号
-     * @param jsonArray 消息内容,内容内每一个元素对应一条消息
+     * @param jsonArray 消息的集合,内容内每一个元素对应一条消息
      * @return json响应体
      */
     public static JSONObject sendGroupForwardMsg(String group_id, JSONArray jsonArray) {
@@ -386,6 +450,30 @@ public class SignalUtil {
         data.put("group_id", group_id);
         data.put("messages", jsonArray.toString());
         return httpPost(SEND_GROUP_FORWARD_MSG, data);
+    }
+
+    /**
+     * 发送合并转发(群)消息,默认发送到文件群（放文件）群聊
+     * 目前测试貌似是最多200条消息合并成聊天记录
+     * 不过要求每条消息字符内容不要太多
+     *
+     * @param jsonArray 息的集合,内容内每一个元素对应一条消息
+     * @return json响应体
+     */
+    public static JSONObject sendGroupForwardMsg(JSONArray jsonArray) {
+        return sendGroupForwardMsg("528828094", jsonArray);
+    }
+
+
+    /**
+     * 发送合并转发 ( 好友 )
+     *
+     * @param user_id  好友QQ号
+     * @param messages 自定义转发消息(消息的合集)
+     * @return json对象
+     */
+    public static JSONObject sendPrivateForwardMsg(String user_id, JSONArray messages) {
+        return null;
     }
 
 

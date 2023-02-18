@@ -3,11 +3,8 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.URLUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -15,22 +12,17 @@ import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.NetworkUtil;
 import com.example.qqbot.Util.SignalUtil;
-import com.example.qqbot.data.CQ.CQCode;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.data.file.DataFile;
 import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.json.DataJson;
-import com.example.qqbot.model.LanZouYmodel.LanZuoCloudResourceSearch;
 import com.example.qqbot.model.pgr.PGRModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -69,7 +61,8 @@ public class GroupModel implements Runnable, IMessageEvent {
             "共鸣选哪个", "共鸣选什么", "意识推荐", "什么意识", "武器共鸣", "配队", "意识技能", "用啥意识", "带啥意识");
 
 
-    private static HashMap<String, String> headImageExpMap = new HashMap<>();
+    private static final HashMap<String, String> headImageExpMap = new HashMap<>();
+    private static final HashMap<String, String> wqwlkjImageUrlMap = new HashMap<>();
 
     static {
         headImageExpMap.put("抓", "grab");
@@ -82,6 +75,9 @@ public class GroupModel implements Runnable, IMessageEvent {
         headImageExpMap.put("招财猫", "FortuneCat");
         headImageExpMap.put("舞鸡腿", "DanceChickenLeg");
         headImageExpMap.put("打年糕", "pound");
+        wqwlkjImageUrlMap.put("获取快手小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/ks_xjj.php?type=json");
+        wqwlkjImageUrlMap.put("获取cos小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/hlxcos.php?type=json");
+        wqwlkjImageUrlMap.put("获取快手二次元图片", "http://api.wqwlkj.cn/wqwlapi/ks_2cy.php?type=json");
     }
 
 
@@ -110,8 +106,12 @@ public class GroupModel implements Runnable, IMessageEvent {
         String group_id = dataGroup.getGroup_id();
         //发言者QQ号
         String user_id = dataGroup.getUser_id();
+        //接受消息的qq机器人
+        String self_id = dataGroup.getSelf_id();
         //消息id
         String message_id = dataGroup.getMessage_id();
+        //消息的json样式
+        JSONArray messageJson = dataGroup.getMessage();
         Set<String> re_reading_member_set = GroupReReadingModel.getMEMBER_SET();
 
         //是否是超级用户发的消息
@@ -133,59 +133,10 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
 
-        //实现触发某个关键词回复
-        if (raw_message.startsWith("菜单")) {
-            SignalUtil.sendGroupMessage(dataGroup.getGroup_id(), CharSequenceUtil.format("""
-                    群功能有
-                    翻译+翻译的内容
-                    蓝奏云资源搜索=关键词
-                    解析蓝奏云直链+蓝奏云分享链接
-                    设置当前群聊监听状态
-                    取消当前群聊监听状态
-                    查询当前群聊监听状态
-                    设置当前群聊推送状态
-                    取消当前群聊推送状态
-                    查询当前群聊推送状态
-                    标记当前群聊黑名单状态
-                    取消当前群聊黑名单状态
-                    添加触发复读机关键词=这里填写关键词
-                    移除触发复读机关键词=这里填写关键词
-                    添加复读机成员+艾特成员
-                    移除复读机成员+艾特成员
-                    获取jk图
-                    获取原神图
-                    设置群消息打印在控制台值=这里填写布尔值
-                    抓+艾特成员
-                    拍瓜+艾特成员
-                    顶球+艾特成员
-                    咬+艾特成员
-                    看这个+艾特成员
-                    保抱肉肉+艾特成员
-                    一起笑+艾特成员
-                    招财猫+艾特成员
-                    舞鸡腿+艾特成员
-                    打年糕+艾特成员
-                    其他游戏相关
-                                        
-                    其他的隐藏功能
-                    60秒看世界
-                    刷新复读机成员
-                    打印触发复读机关键词
-                    打印复读机成员
-                    刷新黑名单群聊数据
-                    打印接受推送消息群聊集合
-                    打印监听群聊集合
-                    打印指定群聊监听状态=这里填写群号
-                    打印指定群聊推送状态=这里填写群号
-                    打印群聊黑名单
-                    打印功能权重列表
-                    查询版本信息
-                    私聊窗口复读机                
-                    """));
-            return;
-        }
-        if (InformationUtil.isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message)) {
+
+        if (InformationUtil.isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message) && !(group_id.equals("942611877"))) {
             PGRModel.consciousnessPGRTable(group_id, user_id);
+            return;
         }
         if (InformationUtil.isContainsMessAge(PGRModel.getPGR_GUILDID(), raw_message)) {
             PGRModel.printPGRGuild(group_id, user_id);
@@ -279,7 +230,7 @@ public class GroupModel implements Runnable, IMessageEvent {
                 String url = DataFile.getRandomKey(DataFile.getYS_IMAGE_LIST());
                 ban.add(DataJson.imageUrl(InformationUtil.subEqual("/", url), url, true));
             }
-            JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeText("机器人", user_id, ban));
+            JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", user_id, ban));
             if (entries.isEmpty()) {
                 log.info("获取原神图出错了!");
                 return;
@@ -299,7 +250,7 @@ public class GroupModel implements Runnable, IMessageEvent {
                 String url = DataFile.getRandomKey(DataFile.getLEG_SERIESL_IST());
                 ban.add(DataJson.imageUrl(InformationUtil.subEqual("/", url), url, true));
             }
-            JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeText("机器人", dataGroup.getSelf_id(), ban));
+            JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", dataGroup.getSelf_id(), ban));
             if (entries.isEmpty()) {
                 log.info("获取腿系列图出错了!");
                 return;
@@ -378,6 +329,35 @@ public class GroupModel implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id, jsonArray.toString());
             return;
         }
+        if (raw_message.startsWith("获取b站最新番剧信息")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取b站最新番剧信息,请稍等!");
+            JSONArray jsonArray = NetworkUtil.getTheLatestOpera();
+            if (jsonArray.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "获取b站最新番剧信息失败!");
+                return;
+            }
+            if (SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, jsonArray)).isEmpty()) {
+                log.info("发送b站最新番剧信息失败!");
+                return;
+            }
+            log.info("发送b站最新番剧信息成功!");
+            return;
+        }
+        if (raw_message.startsWith("获取b站新番更新时间表")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取b站新番更新时间表,请稍等!");
+            JSONArray jsonArray = NetworkUtil.getXinfanTimetable();
+            if (jsonArray.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "获取b站新番更新时间表失败!");
+                return;
+            }
+            if (SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, jsonArray)).isEmpty()) {
+                log.info("获取b站新番更新时间表失败!");
+                return;
+            }
+            log.info("获取b站新番更新时间表成功!");
+            return;
+        }
+
         if (raw_message.startsWith("端口扫描")) {
             String subEqual = InformationUtil.subEqual("端口扫描", raw_message);
             if (subEqual.isEmpty()) {
@@ -404,30 +384,154 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info("历史上的今天获取成功!");
             return;
         }
-        if (raw_message.startsWith("获取头像") && boolSupeRuser) {
+        if (raw_message.startsWith("获取头像")) {
             String userATID = InformationUtil.getUserATID(dataGroup);
             if (userATID.isEmpty()) {
                 return;
             }
-            SignalUtil.sendGroupMessage(group_id, "[CQ:image,file=头像,url=https://q1.qlogo.cn/g?b=qq&nk=" + userATID + "&s=640]");
+            SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(user_id, "https://q1.qlogo.cn/g?b=qq&nk=" + userATID + "&s=640", true));
             return;
         }
         if (raw_message.startsWith("B站热搜榜")) {
-            JSONObject jsonObject = NetworkUtil.getHotSearchListOfStationB();
-            if (jsonObject.isEmpty()) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取B站热搜榜中,请稍等!");
+            JSONArray jsonArray = NetworkUtil.getHotSearchListOfStationB(self_id);
+            if (jsonArray.isEmpty()) {
+                log.info("获取B站热搜榜失败!");
+                return;
+            }
+            SignalUtil.sendGroupForwardMsg(group_id, jsonArray);
+            SignalUtil.sendGroupMessage(group_id, DataJson.at(user_id));
+            log.info("获取B站热搜榜成功!");
+            return;
+        }
+        if (raw_message.startsWith("微博热搜")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取微博热搜中,请稍等!");
+            JSONArray jsonArray = NetworkUtil.weiboHotSearchList(self_id);
+            if (jsonArray.isEmpty()) {
+                log.info("获取微博热搜失败!");
+                return;
+            }
+            SignalUtil.sendGroupForwardMsg(group_id, jsonArray);
+            SignalUtil.sendGroupMessage(group_id, DataJson.at(user_id));
+            log.info("获取微博热搜成功!");
+            return;
+        }
+        if (raw_message.startsWith("获取每日60秒看世界")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取每日60秒看世界,请稍后!");
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.add(DataJson.at(user_id));
+            jsonArray.add(NetworkUtil.getDay60World(user_id));
+            if (SignalUtil.sendGroupMessage(group_id, DataJson.text(jsonArray)).isEmpty()) {
+                log.info("获取每日60秒看世界失败!");
+                return;
+            }
+            log.info("获取每日60秒看世界成功!");
+            return;
+        }
+        if (raw_message.startsWith("获取人生倒计时")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取人生倒计时,请稍后!");
+            String countdownToLife = NetworkUtil.getCountdownToLife();
+            if (countdownToLife.isEmpty()) {
+                log.info("获取人生倒计时失败!,字符串为空串");
                 return;
             }
             JSONArray jsonArray = new JSONArray();
-            jsonArray.add(DataJson.text(jsonObject.get("time", String.class)));
+            jsonArray.add(DataJson.at(user_id));
+            jsonArray.add(DataJson.text(countdownToLife));
+            if (SignalUtil.sendGroupMessage(group_id, DataJson.text(jsonArray)).isEmpty()) {
+                log.info("获取人生倒计时失败!");
+                return;
+            }
+            log.info("获人生倒计时成功!");
+            return;
+        }
 
-            //DataJson.nodeText("机器人", dataGroup.getSelf_id(), )
-
-
-            //SignalUtil.sendGroupForwardMsg(group_id);
+        if (raw_message.contains("撤回")) { //让机器人撤回消息
+            String messageReplyID = InformationUtil.getMessageReplyID(messageJson);
+            if (messageReplyID.isEmpty()) {
+                return;
+            }
+            List<JSONObject> ayTypeList = InformationUtil.getMessageTypeList("at", messageJson);
+            if (ayTypeList.isEmpty()) {
+                return;
+            }
+            String qq = ayTypeList.get(0).getByPath("data.qq", String.class);
+            if (qq == null || qq.isEmpty()) {
+                return;
+            }
+            if (SignalUtil.deleteMsg(messageReplyID).isEmpty()) {
+                log.info("撤回失败!");
+                return;
+            }
+            log.info("撤回成功!");
+            return;
+        }
+        if (raw_message.contains("星期四")) {
+            String copywriting = NetworkUtil.getCrazyThursdayCopywriting();
+            if (copywriting.isEmpty()) {
+                return;
+            }
+            JSONArray jsonArray = new JSONArray();
+            jsonArray.add(DataJson.at(user_id));
+            jsonArray.add(DataJson.text(copywriting));
+            if (SignalUtil.sendGroupMessage(group_id, jsonArray).isEmpty()) {
+                log.info("星期四发送失败!");
+                return;
+            }
+            log.info("星期四发送成功!");
+        }
+        if (raw_message.startsWith("获取指定B站用户最新动态")) {
+            String subEqual = InformationUtil.subEqual("获取指定B站用户最新动态", raw_message);
+            if (subEqual.isEmpty()) {
+                return;
+            }
+            try {
+                Integer.valueOf(subEqual);
+            } catch (NumberFormatException e) {
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "正在获取中,请稍后");
+            JSONArray station = NetworkUtil.getAnalyzeTheDynamicApiOfStation(subEqual);
+            if (station.isEmpty()) {
+                return;
+            }
+            JSONArray jsonArray = new JSONArray();
+            JSONObject item = JSONUtil.parseObj(station.get(0));
+            String textContent = item.get("textContent", String.class);
+            List<String> img_srcList = item.get("img_src", List.class);
+            jsonArray.add(DataJson.text(textContent));
+            for (String s : img_srcList) {
+                jsonArray.add(DataJson.imageUrl(InformationUtil.subEqual("/", s), s, true));
+            }
+            SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, jsonArray));
+            SignalUtil.sendGroupMessage(group_id, "获取成功!");
             return;
         }
 
 
+        for (String key : wqwlkjImageUrlMap.keySet()) {
+            if (!(key.equals(raw_message))) {
+                continue;
+            }
+            SignalUtil.sendGroupMessage(group_id, "正在请求" + key + "中!");
+            JSONArray ban = new JSONArray();
+            for (int i = 0; i < 20; i++) {
+                String wqwlkjImageUrl = NetworkUtil.getWqwlkjImageUrl(wqwlkjImageUrlMap.get(key));
+                if (wqwlkjImageUrl.isEmpty()) {
+                    continue;
+                }
+                ban.add(DataJson.imageUrl(InformationUtil.subEqual("/", wqwlkjImageUrl), wqwlkjImageUrl, true));
+            }
+            if (ban.isEmpty()) {
+                return;
+            }
+            if (SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, ban)).isEmpty()) {
+                log.info("发送" + key + "失败");
+                return;
+            }
+            log.info("发送" + key + "成功");
+            return;
+        }
         for (String key : headImageExpMap.keySet()) {
             if (!(raw_message.startsWith(key))) {
                 continue;
@@ -444,6 +548,32 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info(key + "表情包,发送成功!,at对方=" + userATID);
             break;
         }
+        if (raw_message.startsWith("摸一摸")) {
+            List<JSONObject> at = InformationUtil.getMessageTypeList("at", messageJson);
+            if (at.isEmpty()) {
+                return;
+            }
+            ExecutorService threadPool = Executors.newFixedThreadPool(at.size());
+            try {
+                for (JSONObject jsonObject : at) {
+                    String qq = jsonObject.getByPath("data.qq", String.class);
+                    JSONArray jsonArray = new JSONArray();
+                    jsonArray.add(DataJson.at(user_id));
+                    jsonArray.add(DataJson.imageUrl(qq, "http://api.wqwlkj.cn/wqwlapi/mo.php?qq=" + qq, true));
+                    threadPool.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            SignalUtil.sendGroupMessage(group_id, jsonArray);
+                        }
+                    });
+                }
+            } finally {
+                threadPool.shutdown();
+            }
+            return;
+        }
+
+
         if (re_reading_member_set.contains(user_id) || InformationUtil.keyContains(GroupReReadingModel.getKEY_SET(), InformationUtil.filtrationCQ(raw_message))) {
             //复读模块
             GroupReReadingModel re_reading_model = GroupReReadingModel.getRE_READING_MODEL();

@@ -6,10 +6,6 @@ import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
-import lombok.SneakyThrows;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;

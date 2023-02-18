@@ -3,6 +3,7 @@ package com.example.qqbot.data.json;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Util.SignalUtil;
+import lombok.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
@@ -143,7 +144,6 @@ public class DataJson {
         System.out.println(jsonObject);
     }
 
-
     /**
      * nodeData节点,需要配合node节点使用!!!!
      *
@@ -161,14 +161,14 @@ public class DataJson {
 
 
     /**
-     * 直接返回一组消息,并合并消息发送到群聊里!
+     * 合并消息成合并聊天记录
      *
-     * @param name      显示昵称
-     * @param user_id   对应的QQ号,可以不填写真实的,或者任意数字
+     * @param name       显示昵称
+     * @param user_id    对应的QQ号,可以不填写真实的,或者任意数字
      * @param collection 消息的内容列表
      * @return
      */
-    public static JSONArray nodeText(String name, String user_id, Collection<?> collection) {
+    public static JSONArray nodeMerge(String name, String user_id, Collection<?> collection) {
         JSONArray jsonArray = new JSONArray(collection.size());
         for (Object o : collection) {
             JSONObject node = DataJson.node();
@@ -181,6 +181,17 @@ public class DataJson {
     }
 
 
+    /**
+     * 使用json样式集合的元素编写一条消息的内容,比如艾特人之后,消息后面跟上文本回复,再跟上表钱包等操作
+     *
+     * @param collection json样式集合
+     * @return jsonjieguo
+     */
+    public static JSONArray text(@NonNull Collection<?> collection) {
+        JSONArray jsonArray = new JSONArray(collection.size());
+        jsonArray.addAll(collection);
+        return jsonArray;
+    }
 
 
 }

@@ -2,6 +2,7 @@ package com.example.qqbot.data.file;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.Util.InformationUtil;
 import lombok.Getter;
 
 import java.io.File;
@@ -16,7 +17,7 @@ import java.util.Random;
  * @date 2023/2/16 11:28
  */
 public class DataFile {
-    private static final Random RANDOM = new Random();
+
 
 
     private static final JSONObject ysImageJsonObj = JSONUtil.readJSONObject(new File("E:\\PCwinResouceDisk\\Download\\img\\原神系列.json"), StandardCharsets.UTF_8);
@@ -41,7 +42,7 @@ public class DataFile {
      * @return
      */
     public static String getRandomKey(List<String> list) {
-        int i = RANDOM.nextInt(list.size());
+        int i = InformationUtil.getRANDOM().nextInt(list.size());
         return list.get(i);
     }
 

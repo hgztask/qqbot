@@ -8,10 +8,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.json.DataJson;
 import org.jsoup.Connection;
-import org.junit.jupiter.api.Test;
 
-import java.io.File;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -223,7 +220,7 @@ public class NetworkUtil {
             stringBuilder.append("传送门:" + link);
             nodeArr.add(DataJson.text(stringBuilder));
         }
-        return DataJson.nodeText("机器人", user_id, nodeArr);
+        return DataJson.nodeMerge("机器人", user_id, nodeArr);
     }
 
     /**
@@ -251,7 +248,7 @@ public class NetworkUtil {
             stringBuilder.append("传送门:" + URLEncodeUtil.encode(url));
             nodeArr.add(DataJson.text(stringBuilder));
         }
-        return DataJson.nodeText("机器人", user_id, nodeArr);
+        return DataJson.nodeMerge("机器人", user_id, nodeArr);
     }
 
 
@@ -380,7 +377,125 @@ public class NetworkUtil {
         return dtComtentArr;
     }
 
+    /**
+     * 获取b站最新番剧信息
+     * 并封装号对应的信息只需要用合并聊天记录对象发送即可
+     *
+     * @return 信息集合
+     */
+    public static JSONArray getTheLatestOpera() {
+        JSONObject jsonObject = httpResponse("https://api.bilibili.com/pgc/web/timeline/v2?season_type=1&day_before=1&day_after=5");
+        Integer code = jsonObject.get("code", int.class);
+        if (code == null || code != 0) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        //最新番剧（内有预览图、标题、更新至第N话、更新时间等）
+        JSONArray latest = jsonObject.getByPath("result.latest", JSONArray.class);
+
+        List<String> title = latest.getByPath("title", List.class);
+        //封面
+        List<String> cover = latest.getByPath("cover", List.class);
+        //ep地址
+        List<Integer> episode_id = latest.getByPath("episode_id", List.class);
+        //追番数
+        List<String> follows = latest.getByPath("follows", List.class);
+        //播放量
+        List<String> plays = latest.getByPath("plays", List.class);
+        //更新至第N话
+        List<String> pub_index = latest.getByPath("pub_index", List.class);
+        //存储每条消息的集合
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add(DataJson.text("最新番剧"));
+        for (int i = 0; i < title.size(); i++) {
+            //一条消息中有的元素/内容
+            //每条消息的样式集合
+            JSONArray item = new JSONArray();
+            //向该条消息中添加文本
+            item.add(DataJson.text("番剧:" + title.get(i) + "\n"));
+            String imageUrl = cover.get(i);
+            //对该消息类进行追加图片
+            item.add(DataJson.imageUrl(InformationUtil.subEqual("/", imageUrl), imageUrl, true));
+            //向该条消息中追加添加文本
+            item.add(DataJson.text("\n追番数:" + follows.get(i) + "\n"));
+            //向该条消息中追加添加文本
+            item.add(DataJson.text("播放量:" + plays.get(i) + "\n"));
+            //向该条消息中追加添加文本
+            item.add(DataJson.text("更新至:" + pub_index.get(i)));
+            item.add(DataJson.text("啊b传送门:https://www.bilibili.com/bangumi/play/ep" + episode_id.get(i).toString()));
+            //本条消息添加进去聊天记录集合
+            jsonArray.add(item);
+        }
+        return jsonArray;
+    }
 
 
+    /**
+     * 获取b站新番更新时间表
+     * 并封装号对应的信息只需要用合并聊天记录对象发送即可
+     *
+     * @return JSONArray对象
+     */
+    public static JSONArray getXinfanTimetable() {
+        JSONObject jsonObject = httpResponse("https://api.bilibili.com/pgc/web/timeline/v2?season_type=1&day_before=1&day_after=5");
+        Integer code = jsonObject.get("code", int.class);
+        if (code == null || code != 0) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        //为时间线，可以获取期当天更新的番剧信息，同上
+        JSONArray timeline = jsonObject.getByPath("result.timeline", JSONArray.class);
+        //近七天日期
+        List<String> dateList = timeline.getByPath("date", List.class);
+        //星期几
+        List<Integer> day_of_weekList = timeline.getByPath("day_of_week", List.class);
+        //对应是否是当天的内容0表示否.1表示是
+        List<Integer> is_today = timeline.getByPath("is_today", List.class);
+        //当日更新
+        List<JSONArray> episodesList = timeline.getByPath("episodes", List.class);
+        JSONArray nodeArr = new JSONArray();
+        for (int i = 0; i < episodesList.size(); i++) {
+            JSONArray tempJsonArr = JSONUtil.parseArray(episodesList.get(i));
+            //每一个jsonArray对应当天的更新内容
+            //番剧名
+            List<String> title = tempJsonArr.getByPath("title", List.class);
+            //封面
+            List<String> cover = tempJsonArr.getByPath("cover", List.class);
 
+            //ep地址
+            List<Integer> episode_id = tempJsonArr.getByPath("episode_id", List.class);
+            //追番数
+            List<String> follows = tempJsonArr.getByPath("follows", List.class);
+            //播放量
+            List<String> plays = tempJsonArr.getByPath("plays", List.class);
+            //更新至第N话
+            List<String> pub_index = tempJsonArr.getByPath("pub_index", List.class);
+
+            //一条消息的json样式
+            JSONArray item = new JSONArray();
+            if (is_today.get(i).equals(1)) {
+                item.add(DataJson.text("今天日期:" + dateList.get(i) + "   " + InformationUtil.getDayWeek(day_of_weekList.get(i)) + "\n"));
+            }
+            item.add(DataJson.text("日期:" + dateList.get(i) + "\n"));
+            item.add(DataJson.text("更新了" + title.size() + "个\n"));
+            for (int y = 0; y < title.size(); y++) {
+                if (title.isEmpty()) {
+                    continue;
+                }
+                //处理对应当天的内容
+                item.add(DataJson.text("\n番剧名:" + title.get(y) + "\n"));
+                //插入封面
+                String imageUrl = cover.get(y);
+                item.add(DataJson.imageUrl(InformationUtil.subEqual("/", imageUrl), imageUrl, true));
+                //插入追番数
+                item.add(DataJson.text("\n追番数:" + follows.get(y) + "\n"));
+                item.add(DataJson.text("播放量:" + plays.get(y) + "\n"));
+                item.add(DataJson.text("更新至:" + pub_index.get(y) + "\n"));
+                item.add(DataJson.text("啊b站传送门:https://www.bilibili.com/bangumi/play/ep" + episode_id.get(y).toString() + "\n"));
+            }
+            nodeArr.add(item);
+        }
+        return nodeArr;
+    }
 }
+
+
+

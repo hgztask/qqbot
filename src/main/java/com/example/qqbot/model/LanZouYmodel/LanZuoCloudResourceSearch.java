@@ -11,17 +11,13 @@ import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
 import com.example.qqbot.data.json.DataJson;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 蓝奏云资源搜索模块逻辑层
@@ -95,7 +91,7 @@ public class LanZuoCloudResourceSearch implements Runnable, IMessageEvent {
 
 
         if (size <= 200) {
-            JSONArray jsonArray = DataJson.nodeText("机器人", user_id, dataArraySet);
+            JSONArray jsonArray = DataJson.nodeMerge("机器人", user_id, dataArraySet);
             //目前已知合并转发不支持内容中的消息太大,但消息条数,测试至少可以达到78条,意思就是尽量不要单条消息字符串太多,
             SignalUtil.sendGroupForwardMsg(group_id, jsonArray);
             SignalUtil.sendGroupMessage(group_id, String.format("===========搜索完成!符合关键词资源个数%s个===========", dataArraySet.size()));
@@ -108,7 +104,7 @@ public class LanZuoCloudResourceSearch implements Runnable, IMessageEvent {
                 break;
             }
         }
-        JSONArray jsonArray = DataJson.nodeText("机器人", user_id, tempSet);
+        JSONArray jsonArray = DataJson.nodeMerge("机器人", user_id, tempSet);
         //目前已知合并转发不支持内容中的消息太大,但消息条数,测试至少可以达到200条,意思就是尽量不要单条消息字符串太多,
         SignalUtil.sendGroupForwardMsg(group_id, jsonArray);
         SignalUtil.sendGroupMessage(group_id, String.format("搜索完成!符合关键词资源个数%s个,数量太大故截取,剩下%s", dataArraySet.size(), tempSet.size()));

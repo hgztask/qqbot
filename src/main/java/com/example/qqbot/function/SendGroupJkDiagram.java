@@ -85,7 +85,7 @@ public class SendGroupJkDiagram implements Runnable, IMessageEvent {
      */
     public static JSONObject getJKImageCQ() {
         Connection.Response response = SignalUtil.jsoupHttpGet("http://www.ggapi.cn/api/jkzf", false);
-        JSONObject jsonnull = SignalUtil.getJSONNULL();
+        JSONObject jsonnull = SignalUtil.getJSONOBJNULL();
         if (response == null) {
             log.info("请求失败了!");
             return jsonnull;
@@ -114,7 +114,7 @@ public class SendGroupJkDiagram implements Runnable, IMessageEvent {
             log.info("jsonArray CQ方法返回结果为空列表!");
             return;
         }
-        SignalUtil.sendGroupForwardMsg(group_id,  DataJson.nodeText("机器人", dataGroup.getUser_id(), array));
+        SignalUtil.sendGroupForwardMsg(group_id,  DataJson.nodeMerge("机器人", dataGroup.getUser_id(), array));
         //执行完就移除对应的Q群群聊
         SET_GROUP.remove(group_id);
         SignalUtil.sendGroupMessage(group_id, "获取jk图-本轮请求完成!");

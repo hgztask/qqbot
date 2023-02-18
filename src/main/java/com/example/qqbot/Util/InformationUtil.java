@@ -7,12 +7,13 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.group.DataGroup;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -24,6 +25,9 @@ import java.util.Set;
  */
 @Slf4j
 public class InformationUtil {
+
+    @Getter
+    private static final Random RANDOM = new Random();
 
 
     /**
@@ -54,22 +58,23 @@ public class InformationUtil {
      * @param jsonArray messageJson对象
      * @return 对应类型元素集合
      */
-    public static @NonNull JSONArray getMessageTypeList(@NonNull String type,@NonNull JSONArray jsonArray) {
-        JSONArray typeJsonArray = new JSONArray();
+    public static @NonNull List<JSONObject>getMessageTypeList(@NonNull String type, @NonNull JSONArray jsonArray) {
+        ArrayList<JSONObject> listNull = new ArrayList<>(0);
+        ArrayList<JSONObject> arrayList= new ArrayList<>();
         List<String> typeList = jsonArray.getByPath("type", List.class);
         if (typeList == null || typeList.isEmpty()) {
-            return SignalUtil.getJSONARRNULL();
+            return listNull;
         }
         for (int i = 0; i < typeList.size(); i++) {
             if (!(type.equals(typeList.get(i)))) {
                 continue;
             }
-            typeJsonArray.add(jsonArray.get(i));
+            arrayList.add(JSONUtil.parseObj(jsonArray.get(i)));
         }
-        if (typeJsonArray.isEmpty()) {
-            return SignalUtil.getJSONARRNULL();
+        if (typeList.isEmpty()) {
+            return listNull;
         }
-        return typeJsonArray;
+        return arrayList;
     }
 
 
@@ -291,6 +296,39 @@ public class InformationUtil {
         }
         return false;
     }
+
+
+    /**
+     * 根据i值获取对应星期字符串内容
+     *
+     * @param integer
+     * @return
+     */
+    public static String getDayWeek(Integer integer) {
+        switch (integer) {
+            case 1:
+                return "星期一";
+            case 2:
+                return "星期二";
+            case 3:
+                return "星期三";
+            case 4:
+                return "星期四";
+            case 5:
+                return "星期五";
+            case 6:
+                return "星期六";
+            case 7:
+                return "星期日";
+            default:
+                return "未知周";
+        }
+    }
+
+
+
+
+
 
 
 }
