@@ -33,7 +33,7 @@ public class IkunModel implements Runnable, IMessageEvent {
      * 坤坤关键词
      */
     private static final List<String> IKUNLISET = ListUtil.toList("ikun", "小黑子", "IKUN", "食不食油饼", "鸡哥",
-            "坤", "你干嘛","球","太美","白带","异常","再看一眼","");
+            "坤", "你干嘛","球","太美","白带","异常","再看一眼","铁山靠","爆炸");
 
 
     /**
