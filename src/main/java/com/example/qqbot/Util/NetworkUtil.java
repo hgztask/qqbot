@@ -8,9 +8,16 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.data.json.DataJson;
 import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 网络api封装工具
@@ -495,6 +502,47 @@ public class NetworkUtil {
         }
         return nodeArr;
     }
+
+
+    /**
+     * 获取喜加一
+     *
+     * @return 喜加一的资源类型
+     */
+    public static List<Map<String, String>> getXijiayi() {
+        String content = HttpUtil.get("https://steamstats.cn/xi");
+        if (content == null || content.isEmpty()) {
+            return null;
+        }
+        Document parse = Jsoup.parse(content);
+        List<Map<String, String>> list = new ArrayList<>();
+        Elements tbodyTr = parse.getElementsByTag("tbody").get(0).getElementsByTag("tr");
+        for (Element element : tbodyTr) {
+            HashMap<String, String> map = new HashMap<>();
+            Element title = element.getElementsByAttribute("title").get(0);
+            //名
+            String gameName = title.text();
+            //地址
+            String href = title.attr("href");
+            Elements textNoWrap = element.getElementsByClass("text-no-wrap");
+            //开始时间
+            String startTime = textNoWrap.get(0).text();
+            //结束时间
+            String endTime = textNoWrap.get(1).text();
+            //地址名
+            String store = element.getElementsByClass("v-btn__content").text();
+            map.put("gameName", gameName);
+            map.put("href", href);
+            map.put("startTime", startTime);
+            map.put("endTime", endTime);
+            map.put("store", store);
+            list.add(map);
+        }
+        return list;
+    }
+
+
+
 }
 
 
