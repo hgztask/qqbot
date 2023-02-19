@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -54,13 +55,14 @@ public class InformationUtil {
 
     /**
      * 获取消息中的所有指定类型元素对象
-     * @param type  指定类型
+     *
+     * @param type      指定类型
      * @param jsonArray messageJson对象
      * @return 对应类型元素集合
      */
-    public static @NonNull List<JSONObject>getMessageTypeList(@NonNull String type, @NonNull JSONArray jsonArray) {
+    public static @NonNull List<JSONObject> getMessageTypeList(@NonNull String type, @NonNull JSONArray jsonArray) {
         ArrayList<JSONObject> listNull = new ArrayList<>(0);
-        ArrayList<JSONObject> arrayList= new ArrayList<>();
+        ArrayList<JSONObject> arrayList = new ArrayList<>();
         List<String> typeList = jsonArray.getByPath("type", List.class);
         if (typeList == null || typeList.isEmpty()) {
             return listNull;
@@ -76,7 +78,6 @@ public class InformationUtil {
         }
         return arrayList;
     }
-
 
 
     /**
@@ -326,6 +327,48 @@ public class InformationUtil {
     }
 
 
+    /**
+     * 根据字节大小转成字符串文件大小样式
+     * @param size 字节大小
+     * @return 字符串样式大小
+     */
+    public static String getSize(long size) {
+        //获取到的size为：1705230
+        int GB = 1024 * 1024 * 1024;//定义GB的计算常量
+        int MB = 1024 * 1024;//定义MB的计算常量
+        int KB = 1024;//定义KB的计算常量
+        DecimalFormat df = new DecimalFormat("0.00");//格式化小数
+        String resultSize = "";
+        if (size / GB >= 1) {
+            //如果当前Byte的值大于等于1GB
+            resultSize = df.format(size / (float) GB) + "GB   ";
+        } else if (size / MB >= 1) {
+            //如果当前Byte的值大于等于1MB
+            resultSize = df.format(size / (float) MB) + "MB   ";
+        } else if (size / KB >= 1) {
+            //如果当前Byte的值大于等于1KB
+            resultSize = df.format(size / (float) KB) + "KB   ";
+        } else {
+            resultSize = size + "B   ";
+        }
+        return resultSize;
+    }
+
+    /**
+     * 根据字节大小转成字符串文件大小样式
+     * @param size 字节大小
+     * @return 字符串样式大小
+     */
+    public static String getSize(String size) {
+        Long value;
+        try {
+            value = Long.valueOf(size);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException(e);
+        }
+        return getSize(value);
+
+    }
 
 
 
