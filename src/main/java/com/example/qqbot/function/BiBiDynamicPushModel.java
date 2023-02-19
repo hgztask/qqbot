@@ -346,8 +346,8 @@ public class BiBiDynamicPushModel implements Runnable, IMessageEvent {
                 threadPool.shutdown();
             }
             try {
-                //休眠一分钟然后接着
-                TimeUnit.MINUTES.sleep(1);
+                //休眠5分钟然后接着
+                TimeUnit.MINUTES.sleep(5);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
