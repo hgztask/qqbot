@@ -542,6 +542,45 @@ public class NetworkUtil {
     }
 
 
+    /**
+     * 获取到mikan网站的RSS订阅
+     * 属于最新更新内容
+     *
+     * @return jsonArr对象,已经封装号text对象
+     */
+    public static JSONArray getMikanRSSList() {
+        JSONArray jsonarrnull = SignalUtil.getJSONARRNULL();
+        Connection.Response response = SignalUtil.jsoupHttpGet("https://mikanani.me/RSS/Classic", false);
+        if (response == null || response.statusCode() != 200) {
+            return jsonarrnull;
+        }
+        String body = response.body();
+        if (body.isEmpty()) {
+            return jsonarrnull;
+        }
+        Document parse = Jsoup.parse(body);
+        Elements item = parse.getElementsByTag("item");
+        JSONArray jsonArray = new JSONArray(item.size());
+        for (Element element : item) {
+            //资源名
+            String title = element.getElementsByTag("title").text();
+            //资源大小(字节)
+            String contentLength = element.getElementsByTag("contentLength").text();
+            //时间
+            String pubDate = element.getElementsByTag("pubDate").text();
+            //磁力下载直链
+            String url = element.select("enclosure[url]").attr("url");
+            String format = CharSequenceUtil.format("""
+                    资源名:{}
+                    资源大小:{}
+                    更新时间:{}
+                    磁力下载:{}
+                    """, title, InformationUtil.getSize(contentLength), pubDate, url);
+            jsonArray.add(DataJson.text(format));
+        }
+        return jsonArray;
+    }
+
 
 }
 
