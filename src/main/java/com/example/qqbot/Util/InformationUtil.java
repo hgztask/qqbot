@@ -87,7 +87,13 @@ public class InformationUtil {
      * @return 返回QQ号字符串或者空的字符串
      */
     public static @NonNull String getUserATID(@NonNull DataGroup dataGroup) {
-        return InformationUtil.getUserATID(JSONUtil.parseObj(dataGroup));
+        String userATID = InformationUtil.getUserATID(JSONUtil.parseObj(dataGroup));
+        try {
+            Integer.valueOf(userATID);
+        } catch (NumberFormatException e) {
+            return "";
+        }
+        return userATID;
     }
 
 
@@ -329,6 +335,7 @@ public class InformationUtil {
 
     /**
      * 根据字节大小转成字符串文件大小样式
+     *
      * @param size 字节大小
      * @return 字符串样式大小
      */
@@ -356,6 +363,7 @@ public class InformationUtil {
 
     /**
      * 根据字节大小转成字符串文件大小样式
+     *
      * @param size 字节大小
      * @return 字符串样式大小
      */
@@ -369,9 +377,6 @@ public class InformationUtil {
         return getSize(value);
 
     }
-
-
-
 
 
 }
