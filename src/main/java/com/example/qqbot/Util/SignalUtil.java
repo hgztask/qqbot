@@ -227,15 +227,30 @@ public class SignalUtil {
 
     /**
      * 机器人发送群消息
+     * 默认消息内容不做为纯文本,会解析json内容
      *
      * @param group_id 群号
      * @param message  消息内容
      * @return json对象结果
      */
     public static JSONObject sendGroupMessage(@NonNull String group_id, @NonNull String message) {
+        return sendGroupMessage(group_id, message, false);
+    }
+
+    /**
+     * 机器人发送群消息
+     * 该方法需要手动指定消息内容是否作为纯文本发送
+     *
+     * @param group_id    群号
+     * @param message     要发送的内容
+     * @param auto_escape 消息内容是否作为纯文本发送 ( 即不解析 CQ 码 ) , 只在 message 字段是字符串时有效,message为纯json内容时不生效
+     * @return json对象结果
+     */
+    public static JSONObject sendGroupMessage(@NonNull String group_id, @NonNull String message, boolean auto_escape) {
         final Map<String, Object> data = new HashMap<>(2);
         data.put("group_id", group_id);
         data.put("message", message);
+        data.put("auto_escape", auto_escape);
         return SignalUtil.httpPost(GROUPENDPOINT, data);
     }
 
@@ -402,8 +417,6 @@ public class SignalUtil {
         }
         return execute;
     }
-
-
 
 
     /**
