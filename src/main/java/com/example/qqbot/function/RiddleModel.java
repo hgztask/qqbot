@@ -1,12 +1,22 @@
 package com.example.qqbot.function;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
+import lombok.Data;
+import lombok.SneakyThrows;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +32,7 @@ public class RiddleModel implements Runnable, IMessageEvent {
 
     /**
      * 用于存储群聊是否使用了解谜语功能,以及是否解除谜语来
+     * 其中value值为布尔值类型,true表示该
      */
     private static final Map<String, Boolean> DATA_MAP = new HashMap<>();
 
@@ -58,10 +69,9 @@ public class RiddleModel implements Runnable, IMessageEvent {
         Set<String> keySet = DATA_MAP.keySet();
         if (keySet.contains(group_id)) {
             if (!(DATA_MAP.get(group_id))) {
-                SignalUtil.sendGroupMessage(group_id,"当前群聊上一个还未解谜出来哟,如果需要提示,可以回复查看谜底,或者提示哟,或者回复跳过本轮解谜");
+                SignalUtil.sendGroupMessage(group_id, "当前群聊上一个还未解谜出来哟,如果需要提示,可以回复查看谜底,或者提示哟,或者回复跳过本轮解谜");
                 return true;
             }
-
 
 
         }
@@ -74,6 +84,7 @@ public class RiddleModel implements Runnable, IMessageEvent {
     public void run() {
 
     }
+
 
 
 }

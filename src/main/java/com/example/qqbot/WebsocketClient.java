@@ -59,7 +59,7 @@ public class WebsocketClient {
                 @Override
                 public void onError(Exception ex) {
                     log.info("[websocket] 连接错误={}", ex.getMessage());
-                    //throw new RuntimeException(ex);
+                    throw new RuntimeException(ex);
                 }
             };
             webSocketClient.connect();

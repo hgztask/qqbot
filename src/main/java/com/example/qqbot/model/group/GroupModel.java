@@ -133,7 +133,6 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
 
-
         if (InformationUtil.isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message) && !(group_id.equals("942611877"))) {
             PGRModel.consciousnessPGRTable(group_id, user_id);
             return;
@@ -445,7 +444,6 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info("获人生倒计时成功!");
             return;
         }
-
         if (raw_message.contains("撤回")) { //让机器人撤回消息
             String messageReplyID = InformationUtil.getMessageReplyID(messageJson);
             if (messageReplyID.isEmpty()) {
@@ -507,6 +505,111 @@ public class GroupModel implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id, "获取成功!");
             return;
         }
+        if (raw_message.startsWith("喜加一")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取喜加一!");
+            List<Map<String, String>> xijiayi = NetworkUtil.getXijiayi();
+            if (xijiayi == null || xijiayi.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "未获取到喜加一,可能是当天并未有!");
+                return;
+            }
+            if (xijiayi.size() <= 1) {
+                Map<String, String> map = xijiayi.get(0);
+                SignalUtil.sendGroupMessage(group_id, CharSequenceUtil.format("""
+                        今天喜加一内容:
+                        游戏名:{}
+                        地址:{}
+                        开始时间:{}
+                        结束时间:{}
+                        商店:{}
+                        """, map.get("gameName"), map.get("href"), map.get("startTime"), map.get("endTime"), map.get("store")));
+                return;
+            }
+            JSONArray nodeArr = new JSONArray(xijiayi.size());
+            nodeArr.add(DataJson.text("今天喜加一内容"));
+            for (Map<String, String> map : xijiayi) {
+                String format = CharSequenceUtil.format("""
+                        游戏名:{}
+                        地址:{}
+                        开始时间:{}
+                        结束时间:{}
+                        商店:{}
+                        """, map.get("gameName"), map.get("href"), map.get("startTime"), map.get("endTime"), map.get("store"));
+                nodeArr.add(DataJson.text(format));
+            }
+            SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, nodeArr));
+            return;
+        }
+        if (raw_message.startsWith("获取mikan最新磁力资源")) {
+            SignalUtil.sendGroupMessage(group_id, "正在获取mikan最新磁力.请稍后!");
+            JSONArray mikanRSSList = NetworkUtil.getMikanNewestList();
+            if (mikanRSSList.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "获取最新mikan磁力失败!");
+                return;
+            }
+            SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, mikanRSSList));
+        }
+        if (raw_message.startsWith("获取萌番组最新种子资源")) {
+            SignalUtil.sendGroupMessage(group_id, "正获取萌番组最新种子资源.请稍后!");
+            JSONArray bangumiNewRss = NetworkUtil.getBangumiNewRss();
+            if (bangumiNewRss.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "获取萌番组最新种子资源失败!");
+                return;
+            }
+            SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, bangumiNewRss));
+            return;
+        }
+        if (raw_message.startsWith("mikan磁力搜索=")) {
+            String key = InformationUtil.subEqual("=", raw_message);
+            if (key.isEmpty() || key.length() < 1) {
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "正在搜索相关资源.请稍后!");
+            JSONArray searchArr = NetworkUtil.getMikanSearch(key);
+            if (searchArr.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "未搜索到 " + key + " 相关资源!");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "已搜索到 " + key + " 资源!");
+            if (searchArr.size() == 1) {
+                SignalUtil.sendGroupMessage(group_id, searchArr);
+                return;
+            }
+            SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, searchArr));
+            return;
+        }
+        if (raw_message.startsWith("动漫花园磁力搜索=") && !(raw_message.contains("关键词"))) {
+            String key = InformationUtil.subEqual("=", raw_message);
+            if (key.isEmpty() || key.length() <= 1) {
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "正在搜索相关资源.请稍后!");
+            JSONArray searchArr = NetworkUtil.getDMHYSearch(key);
+            if (searchArr.isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "未搜索到 " + key + " 相关资源!");
+                return;
+            }
+            if (searchArr.size() == 1) {
+                SignalUtil.sendGroupMessage(group_id, searchArr);
+                return;
+            }
+            if (SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, searchArr)).isEmpty()) {
+                SignalUtil.sendGroupMessage(group_id, "发送失败!请检查控制台内容");
+                return;
+            }
+            return;
+        }
+
+
+        if (raw_message.contains("跑路")) {
+            String userATID = InformationUtil.getUserATID(dataGroup);
+            if (userATID.isEmpty()) {
+                log.info("获取userATID的值为空字符串");
+                return;
+            }
+            String imgeUrl = "http://h.xiaocha.fun/api/pao.php?qq=" + userATID;
+            SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(userATID, imgeUrl, true));
+            return;
+        }
 
 
         for (String key : wqwlkjImageUrlMap.keySet()) {
@@ -548,7 +651,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info(key + "表情包,发送成功!,at对方=" + userATID);
             break;
         }
-        if (raw_message.startsWith("摸一摸")) {
+        if (raw_message.startsWith("摸")) {
             List<JSONObject> at = InformationUtil.getMessageTypeList("at", messageJson);
             if (at.isEmpty()) {
                 return;
@@ -699,6 +802,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info("是语音消息!");
             return false;
         }
+
 
         this.run();
         return true;

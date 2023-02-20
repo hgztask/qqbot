@@ -711,7 +711,7 @@ public class NetworkUtil {
             String timeline = v.get("timeline", String.class);
             //用户发送内容
             String text = v.get("text", String.class);
-            new DataBiBiRoomLive(nickname, uid, timeline, DateUtil.parse(timeline).getTime(), text);
+            item.add(new DataBiBiRoomLive(nickname, uid, timeline, DateUtil.parse(timeline).getTime(), text));
         }
         return item;
     }
