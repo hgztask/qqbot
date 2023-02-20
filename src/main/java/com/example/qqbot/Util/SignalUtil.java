@@ -12,6 +12,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -403,6 +404,8 @@ public class SignalUtil {
     }
 
 
+
+
     /**
      * 发送合并转发 ( 群 )消息
      * 目前测试貌似是最多200条消息合并成聊天记录
@@ -449,7 +452,13 @@ public class SignalUtil {
         HashMap<String, Object> data = new HashMap<>();
         data.put("group_id", group_id);
         data.put("messages", jsonArray.toString());
-        return httpPost(SEND_GROUP_FORWARD_MSG, data);
+        JSONObject httpPost = httpPost(SEND_GROUP_FORWARD_MSG, data);
+        Integer retcode = httpPost.get("retcode", int.class);
+        if (retcode.equals(100)) {
+            log.info("发送失败!=" + httpPost.toStringPretty());
+            return JSONOBJNULL;
+        }
+        return httpPost;
     }
 
     /**
