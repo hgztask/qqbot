@@ -1,23 +1,23 @@
 package com.example.qqbot.Util;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.URLUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.data.bilibili.DataBiBiRoomLive;
 import com.example.qqbot.data.json.DataJson;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * 网络api封装工具
@@ -543,22 +543,12 @@ public class NetworkUtil {
 
 
     /**
-     * 获取到mikan网站的RSS订阅
-     * 属于最新更新内容
+     * 获取mikan网站Rss规则内容的资源
      *
-     * @return jsonArr对象,已经封装号text对象
+     * @param parse RSS内容
+     * @return jsonArr对象, 已经封装号text对象
      */
-    public static JSONArray getMikanRSSList() {
-        JSONArray jsonarrnull = SignalUtil.getJSONARRNULL();
-        Connection.Response response = SignalUtil.jsoupHttpGet("https://mikanani.me/RSS/Classic", false);
-        if (response == null || response.statusCode() != 200) {
-            return jsonarrnull;
-        }
-        String body = response.body();
-        if (body.isEmpty()) {
-            return jsonarrnull;
-        }
-        Document parse = Jsoup.parse(body);
+    public static JSONArray miKanRssRule(Document parse) {
         Elements item = parse.getElementsByTag("item");
         JSONArray jsonArray = new JSONArray(item.size());
         for (Element element : item) {
@@ -575,10 +565,155 @@ public class NetworkUtil {
                     资源大小:{}
                     更新时间:{}
                     磁力下载:{}
-                    """, title, InformationUtil.getSize(contentLength), pubDate, url);
+                    """, title, InformationUtil.getSize(contentLength), pubDate, URLUtil.encode(url));
             jsonArray.add(DataJson.text(format));
         }
         return jsonArray;
+    }
+
+
+    /**
+     * RSS订阅
+     * 获取到mikan网站最新的资源
+     *
+     * @return jsonArr对象, 已经封装号text对象
+     */
+    public static JSONArray getMikanNewestList() {
+        JSONArray jsonarrnull = SignalUtil.getJSONARRNULL();
+        Connection.Response response = SignalUtil.jsoupHttpGet("https://mikanani.me/RSS/Classic", false);
+        if (response == null || response.statusCode() != 200) {
+            return jsonarrnull;
+        }
+        String body = response.body();
+        if (body.isEmpty()) {
+            return jsonarrnull;
+        }
+        return miKanRssRule(Jsoup.parse(body));
+    }
+
+
+    /**
+     * RSS订阅方式搜索
+     * 获取到mikan网站搜索内容
+     *
+     * @param key 要搜索的资源
+     * @return jsonArr对象, 已经封装号text对象
+     */
+    public static JSONArray getMikanSearch(String key) {
+        Connection connect = Jsoup.connect("https://mikanani.me/RSS/Search?searchstr=" + key);
+        if (connect == null) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        try {
+            return miKanRssRule(connect.get());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    /**
+     * 搜索动漫花园的资源
+     * 已经针对于机器人发送消息进行封装,直接调用nodeMessage即可
+     *
+     * @param key 关键词
+     * @return
+     */
+    @SuppressWarnings("all")
+    public static JSONArray getDMHYSearch(String key) {
+        Connection.Response response = SignalUtil.jsoupHttpGet("https://dmhy.b168.net/topics/list?keyword=" + key, false);
+        if (response == null) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        Document parse = Jsoup.parse(response.body());
+        Elements tbodyTr = parse.getElementsByTag("tbody").get(0).getElementsByTag("tr");
+        JSONArray jsonArray = new JSONArray(tbodyTr.size());
+        for (Element element : tbodyTr) {
+            String time = element.getElementsByTag("td").get(0).getElementsByTag("span").text();
+            String title = element.getElementsByClass("title").text();
+            String url = element.getElementsByClass("download-arrow arrow-magnet").attr("href");
+            String size = element.select("td[align='center']").get(2).text();
+            Elements td = element.getElementsByTag("td");
+            //发布人
+            String pushUser = td.get(td.size() - 1).text();
+            String content = CharSequenceUtil.format("""
+                    资源名:{}
+                    发布时间:{}
+                    文件大小:{}
+                    发布人:{}
+                    """, title, time, size, pushUser);
+            jsonArray.add(DataJson.text(content));
+            jsonArray.add(DataJson.text("下载地址(磁力):" + URLUtil.decode(url)));
+        }
+        return jsonArray;
+    }
+
+
+    /**
+     * 获取萌番组最新种子资源
+     *
+     * @return 封装好的jsonarr对象
+     */
+    public static JSONArray getBangumiNewRss() {
+        Connection.Response response = SignalUtil.jsoupHttpGet("https://bangumi.moe/rss/latest", false);
+        if (response == null || response.statusCode() != 200) {
+            return SignalUtil.getJSONARRNULL();
+        }
+        Document parse = Jsoup.parse(response.body());
+        Elements item = parse.getElementsByTag("item");
+        JSONArray jsonArray = new JSONArray(item.size());
+        for (Element element : item) {
+            String title = element.getElementsByTag("title").get(0).text();
+            String pubDate = element.getElementsByTag("pubDate").get(0).text();
+            String url = element.select("enclosure[url]").attr("url");
+            String format = CharSequenceUtil.format("""
+                    资源名:{}
+                    发布时间:{}
+                    下载地址:{}
+                    """, title, pubDate, URLUtil.encode(url));
+            jsonArray.add(DataJson.text(format));
+        }
+        return jsonArray;
+    }
+
+
+    /**
+     * 获取指定b站直播间弹幕信息!
+     *
+     * @param id 直播间房号id
+     * @return 封装的消息对象
+     */
+    public static Set<DataBiBiRoomLive> getBiBiliveMessage(String id) {
+        Set<DataBiBiRoomLive> setNull = new HashSet<>(0);
+        Connection.Response response = SignalUtil.jsoupHttpGet("http://api.live.bilibili.com/ajax/msg?roomid=" + id, true);
+        if (response == null || response.statusCode() != 200) {
+            return setNull;
+        }
+        JSONObject jsonBody;
+        try {
+            jsonBody = JSONUtil.parseObj(response.body());
+        } catch (Exception e) {
+            //throw new RuntimeException(e);
+            return setNull;
+        }
+        Integer code = jsonBody.get("code", int.class);
+        if (code == null || code != 0) {
+            return setNull;
+        }
+        List<JSONObject> room = jsonBody.getByPath("data.room", List.class);
+        Set<DataBiBiRoomLive> item = new HashSet<>();
+        for (JSONObject v : room) {
+            //用户名称
+            String nickname = v.get("nickname", String.class);
+            //用户uid
+            String uid = v.get("uid", String.class);
+            //发送时间
+            String timeline = v.get("timeline", String.class);
+            //用户发送内容
+            String text = v.get("text", String.class);
+            new DataBiBiRoomLive(nickname, uid, timeline, DateUtil.parse(timeline).getTime(), text);
+        }
+        return item;
     }
 
 
