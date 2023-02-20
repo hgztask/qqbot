@@ -67,6 +67,8 @@ public class BiBiDynamicPushModel implements Runnable, IMessageEvent {
     static {
         Set<String> uidSet = new HashSet<>(1);
         uidSet.add("382651856");
+        uidSet.add("1858782574");
+        uidSet.add("6646795");
         GROUP_MAP.put("760849278", uidSet);
     }
 
