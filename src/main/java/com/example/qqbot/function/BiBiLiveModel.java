@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 public class BiBiLiveModel implements Runnable, IMessageEvent {
-    private DataGroup dataGroup;
 
     /**
      * b站直播间监听弹幕
@@ -267,7 +266,7 @@ public class BiBiLiveModel implements Runnable, IMessageEvent {
         if (!("group".equals(message.getMessage_type()))) {
             return false;
         }
-        this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
+        DataGroup dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
         String user_id = dataGroup.getUser_id();
         String self_id = dataGroup.getSelf_id();
         String group_id = dataGroup.getGroup_id();
