@@ -105,8 +105,8 @@ public class BiBiDynamicPushModel implements Runnable, IMessageEvent {
         String group_id = dataGroup.getGroup_id();
         String raw_message = dataGroup.getRaw_message();
         List<String> superuser = DataUserEights.SUPERUSER;
-        if (raw_message.startsWith("添加要推送b站动态用户") && superuser.contains(user_id)) {
-            String subEqual = InformationUtil.subEqual("添加要推送b站动态用户", raw_message);
+        if (raw_message.startsWith("添加要推送b站动态用户=") && superuser.contains(user_id)) {
+            String subEqual = InformationUtil.subEqual("=", raw_message);
             if (subEqual.isEmpty()) {
                 return false;
             }
@@ -117,8 +117,8 @@ public class BiBiDynamicPushModel implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id, "添加失败!");
             return true;
         }
-        if (raw_message.startsWith("移除要推送b站动态用户") && superuser.contains(user_id)) {
-            String subEqual = InformationUtil.subEqual("", raw_message);
+        if (raw_message.startsWith("移除要推送b站动态用户=") && superuser.contains(user_id)) {
+            String subEqual = InformationUtil.subEqual("=", raw_message);
             if (subEqual.isEmpty()) {
                 return true;
             }
@@ -129,10 +129,10 @@ public class BiBiDynamicPushModel implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id, "移除失败!");
             return true;
         }
-        if (raw_message.startsWith("修改要推送b站动态用户") && superuser.contains(user_id)) {
+        if (raw_message.startsWith("修改要推送b站动态用户=") && superuser.contains(user_id)) {
             return true;
         }
-        if (raw_message.startsWith("查询要推送b站动态用户") && superuser.contains(user_id)) {
+        if (raw_message.startsWith("查询要推送b站动态用户=") && superuser.contains(user_id)) {
             String subEqual = InformationUtil.subEqual("", raw_message);
             if (subEqual.isEmpty()) {
                 return true;
