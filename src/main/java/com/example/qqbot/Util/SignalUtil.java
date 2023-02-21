@@ -13,7 +13,6 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -406,6 +405,9 @@ public class SignalUtil {
      */
     @SuppressWarnings("all")
     public static JSONObject getMessage(@NonNull String message_id) {
+        if (message_id=="") {
+            return getJSONOBJNULL();
+        }
         return SignalUtil.httpGet(GET_MSG, "?message_id=" + message_id);
     }
 
