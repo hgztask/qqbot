@@ -1,8 +1,10 @@
 package com.example.qqbot.model.group;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
@@ -28,40 +30,41 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
 
     @Override
     public void run() {
-        JSONObject messageJson = SignalUtil.getMessage(dataGroupRecall.getMessage_id());
-        if (messageJson.isEmpty()) {
+        JSONObject jsonObject = SignalUtil.getMessage(dataGroupRecall.getMessage_id());
+        if (jsonObject.isEmpty()) {
             log.info("获取群撤回的原始消息失败,messageJson=空的json");
             return;
         }
-        DataRecall dataRecall = messageJson.getByPath("data", DataRecall.class);
+        DataRecall dataRecall = jsonObject.getByPath("data", DataRecall.class);
         if (dataRecall == null) {
             log.info("获取群撤回的data消息失败,data=null");
             return;
         }
+        JSONObject sender = dataRecall.getSender();
         //撤回的人员QQ号
-        String user_id = dataRecall.getSender().get("user_id", String.class);
+        String user_id = sender.get("user_id", String.class);
         if (DataUserEights.BOTUSERID.contains(user_id)) {
             log.info("机器人撤回的消息不需要推送给超级用户!");
             return;
         }
-
-
         long time = dataRecall.getTime() * 1000;
-        boolean empty = SignalUtil.sendPrivateMessage(DataUserEights.SUPERUSER.get(0), CharSequenceUtil.format("""
-                        ===撤回消息记录====
-                        是否是群消息={}
-                        是群消息时的群号={}
-                        消息类型={}
-                        发送者={}
-                        发送时间={}
-                        消息内容={}""", dataRecall.isGroup(), dataRecall.getGroup_id(), dataRecall.getMessage_type(),
-                dataRecall.getSender().toStringPretty(), DateUtil.date(time),
-                dataRecall.getMessage().toStringPretty())).isEmpty();
-        if (empty) {
+        String nickname = sender.get("nickname", String.class);
+        String group_id = dataRecall.getGroup_id();
+        JSONArray messageJson = dataRecall.getMessage();
+        SignalUtil.sendPrivateMessage(CharSequenceUtil.format("""
+                ===群撤回消息记录====
+                群聊:{}
+                发言人昵称:{}
+                发言人qq号:{}
+                时间:{}
+                撤回消息如下:
+                """, group_id, nickname, user_id, DateUtil.date(time)));
+        //发送原消息到超级用户上
+        JSONObject sendPrivateMessage = SignalUtil.sendPrivateMessage(messageJson);
+        if (sendPrivateMessage.isEmpty()) {
             log.info("消息推送给超级用户失败!=" + dataRecall);
             return;
         }
-
         log.info("已将消息推送给超级用户!");
     }
 
