@@ -45,7 +45,7 @@ public class GroupModel implements Runnable, IMessageEvent {
     /**
      * 黑名单群聊
      */
-    private static final File BLACK_PATHF_FILE = new File("E:\\黑名单群聊.json");
+    private static final File BLACK_PATHF_FILE = new File("E:\\qqbot\\黑名单群聊.json");
 
 
     /**
