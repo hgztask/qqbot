@@ -61,20 +61,16 @@ public class InformationUtil {
      * @return 对应类型元素集合
      */
     public static @NonNull List<JSONObject> getMessageTypeList(@NonNull String type, @NonNull JSONArray jsonArray) {
-        ArrayList<JSONObject> listNull = new ArrayList<>(0);
         ArrayList<JSONObject> arrayList = new ArrayList<>();
         List<String> typeList = jsonArray.getByPath("type", List.class);
         if (typeList == null || typeList.isEmpty()) {
-            return listNull;
+            return arrayList;
         }
         for (int i = 0; i < typeList.size(); i++) {
             if (!(type.equals(typeList.get(i)))) {
                 continue;
             }
             arrayList.add(JSONUtil.parseObj(jsonArray.get(i)));
-        }
-        if (typeList.isEmpty()) {
-            return listNull;
         }
         return arrayList;
     }
