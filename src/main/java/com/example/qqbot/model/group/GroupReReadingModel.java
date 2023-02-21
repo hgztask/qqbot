@@ -45,12 +45,12 @@ public class GroupReReadingModel implements Runnable {
     /**
      * 指定存储复读机成员的路径
      */
-    private static final File MEMBER_PATH_FILE = new File("E:\\复读成员.json");
+    private static final File MEMBER_PATH_FILE = new File("E:\\qqbot\\复读成员.json");
 
     /**
      * 存储自动触发复读机的关键词的路径
      */
-    private static final File KEYPATH_FILE = new File("E:\\复读关键词.json");
+    private static final File KEYPATH_FILE = new File("E:\\qqbot\\复读关键词.json");
     /**
      * 复读机的成员集合
      */
