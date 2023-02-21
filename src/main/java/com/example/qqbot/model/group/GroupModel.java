@@ -446,7 +446,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
         //该关键词要比下面的撤回关键词优先
-        if (raw_message.startsWith("监听该成员撤回消息") && boolSupeRuser) {
+        if (raw_message.startsWith("监听成员撤回消息") && boolSupeRuser) {
             List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
             if (atList.isEmpty()) {
                 return;
@@ -470,7 +470,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         //该关键词要比下面的撤回关键词优先
-        if (raw_message.startsWith("取消监听该成员撤回消息") && boolSupeRuser) {
+        if (raw_message.startsWith("取消监听成员撤回消息") && boolSupeRuser) {
             List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
             if (atList.isEmpty()) {
                 return;
@@ -491,6 +491,30 @@ public class GroupModel implements Runnable, IMessageEvent {
                 return;
             }
             SignalUtil.sendGroupMessage(group_id, "取消监听该成员撤回消息-取消失败!");
+            return;
+        }
+        //该关键词要比下面的撤回关键词优先
+        if (raw_message.startsWith("清空监听成员内存中的撤回消息") && boolSupeRuser) {
+            List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
+            if (atList.isEmpty()) {
+                return;
+            }
+            boolean temp = false;
+            for (JSONObject v : atList) {
+                String atID = v.getByPath("data.qq", String.class);
+                if (atID == null || atID.isBlank()) {
+                    continue;
+                }
+                if (ListeningGroupWithdrawalModel.delMessage(atID)) {
+                    temp = true;
+                }
+            }
+            if (temp) {
+                SignalUtil.sendGroupMessage(group_id, "已清空指定监听成员内存中的撤回消息");
+                FileUtil.writeUtf8String(JSONUtil.toJsonPrettyStr(ListeningGroupWithdrawalModel.getListGroupUseID()), ListeningGroupWithdrawalModel.getLIST_GROUP_USEID_FILE_PATH());
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "清空监听成员内存中的撤回消息-失败!");
             return;
         }
         //该关键词要比上面的撤回关键词底
