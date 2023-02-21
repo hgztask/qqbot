@@ -56,8 +56,13 @@ public class GroupModel implements Runnable, IMessageEvent {
     private static Set<String> BLACKGROUPID = GroupReReadingModel.getFileJson(BLACK_PATHF_FILE);
 
 
+    /**
+     * 表情包api
+     */
     private static final HashMap<String, String> headImageExpMap = new HashMap<>();
-    private static final HashMap<String, String> wqwlkjImageUrlMap = new HashMap<>();
+    private static final HashMap<String, String> walkImageUrlMap = new HashMap<>();
+
+    private static final HashMap<String, String> mochaImageUrlMap = new HashMap<>();
 
     static {
         headImageExpMap.put("抓", "grab");
@@ -70,9 +75,10 @@ public class GroupModel implements Runnable, IMessageEvent {
         headImageExpMap.put("招财猫", "FortuneCat");
         headImageExpMap.put("舞鸡腿", "DanceChickenLeg");
         headImageExpMap.put("打年糕", "pound");
-        wqwlkjImageUrlMap.put("获取快手小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/ks_xjj.php?type=json");
-        wqwlkjImageUrlMap.put("获取cos小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/hlxcos.php?type=json");
-        wqwlkjImageUrlMap.put("获取快手二次元图片", "http://api.wqwlkj.cn/wqwlapi/ks_2cy.php?type=json");
+        walkImageUrlMap.put("获取快手小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/ks_xjj.php?type=json");
+        walkImageUrlMap.put("获取cos小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/hlxcos.php?type=json");
+        walkImageUrlMap.put("获取快手二次元图片", "http://api.wqwlkj.cn/wqwlapi/ks_2cy.php?type=json");
+        mochaImageUrlMap.put("狠狠滴咬", "http://h.xiaocha.fun/api/yao/yao.php?QQ=");
     }
 
     /**
@@ -120,6 +126,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
 
+
         if (isPrintGroupMessageConsole) {
             log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
         }
@@ -133,7 +140,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
         if (raw_message.startsWith("添加复读机成员") && boolSupeRuser) { //需要超级用户权限
             //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
-            String userATID = InformationUtil.getUserATID(dataGroup);
+            String userATID = InformationUtil.getMessageOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 return;
             }
@@ -141,7 +148,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         if (raw_message.startsWith("移除复读机成员") && boolSupeRuser) { //需要超级用户权限
-            String userATID = InformationUtil.getUserATID(dataGroup);
+            String userATID = InformationUtil.getMessageOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 return;
             }
@@ -374,7 +381,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         if (raw_message.startsWith("获取头像")) {
-            String userATID = InformationUtil.getUserATID(dataGroup);
+            String userATID = InformationUtil.getMessageOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 return;
             }
@@ -663,27 +670,58 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
 
-
-        if (raw_message.contains("心碎碎")) {
-            String userATID = String.valueOf(InformationUtil.getMessageTypeList("at", messageJson).get(0));
+        if (raw_message.startsWith("心碎碎")) {
+            String userATID = InformationUtil.getMessageOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 log.info("获取userATID的值为空字符串");
                 return;
             }
             String imgeUrl = "http://h.xiaocha.fun/api/sui/sui.php?QQ=" + userATID;
-            SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(userATID, imgeUrl, true));
+            SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(InformationUtil.subEqual("/", imgeUrl), imgeUrl, true));
             return;
         }
 
+        if (raw_message.contains("获取引用图片直链")) {
+            String replyID = InformationUtil.getMessageReplyID(messageJson);
+            //根据消息ID获取原消息
+            JSONObject message = SignalUtil.getMessage(replyID);
+            if (message.isEmpty()) {
+                log.info("getMessage方法返回的json为空的Json对象");
+                return;
+            }
+            //获取到message内容列表
+            JSONArray jsonArray = message.getByPath("data.message", JSONArray.class);
+            if (jsonArray == null || jsonArray.isEmpty()) {
+                log.info("byPath非Json对象或者为null");
+                return;
+            }
+            Set<String> messageTypeList = InformationUtil.getMessageImageURLList(jsonArray);
+            SignalUtil.sendGroupMessage(group_id, "引用图片直链:\n" + JSONUtil.toJsonPrettyStr(messageTypeList));
+            return;
+        }
 
-        for (String key : wqwlkjImageUrlMap.keySet()) {
+        for (String key : mochaImageUrlMap.keySet()) {
+            if (!(raw_message.startsWith(key))) {
+                continue;
+            }
+            String atID = InformationUtil.getMessageOneAtID(messageJson);
+            if (atID.isEmpty()) {
+                return;
+            }
+            String url = mochaImageUrlMap.get(key) + atID;
+            String imageFIleNmae = InformationUtil.subEqual("/", url);
+            SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(imageFIleNmae, url, true));
+            return;
+        }
+
+        for (String key : walkImageUrlMap.keySet()) {
             if (!(key.equals(raw_message))) {
                 continue;
             }
             SignalUtil.sendGroupMessage(group_id, "正在请求" + key + "中!");
             JSONArray ban = new JSONArray();
             for (int i = 0; i < 20; i++) {
-                String wqwlkjImageUrl = NetworkUtil.getWqwlkjImageUrl(wqwlkjImageUrlMap.get(key));
+                String wqwlkjImageUrl = NetworkUtil.getWqwlkjImageUrl(walkImageUrlMap.get(key));
                 if (wqwlkjImageUrl.isEmpty()) {
                     continue;
                 }
@@ -703,7 +741,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             if (!(raw_message.startsWith(key))) {
                 continue;
             }
-            String userATID = InformationUtil.getUserATID(dataGroup);
+            String userATID = InformationUtil.getMessageOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 log.info("获取userATID的值为空字符串");
                 return;
