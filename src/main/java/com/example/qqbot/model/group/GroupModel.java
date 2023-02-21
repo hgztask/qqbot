@@ -444,6 +444,56 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info("获人生倒计时成功!");
             return;
         }
+
+        //该关键词要比下面的撤回关键词优先
+        if (raw_message.startsWith("监听该成员撤回消息") && boolSupeRuser) {
+            List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
+            if (atList.isEmpty()) {
+                return;
+            }
+            boolean temp = false;
+            for (JSONObject v : atList) {
+                String atID = v.getByPath("data.qq", String.class);
+                if (atID == null || atID.isBlank()) {
+                    continue;
+                }
+                if (ListeningGroupWithdrawalModel.addUserID(atID)) {
+                    temp = true;
+                }
+            }
+            if (temp) {
+                SignalUtil.sendGroupMessage(group_id, "已登记指定监听成员撤回消息队列");
+                FileUtil.writeUtf8String(JSONUtil.toJsonPrettyStr(ListeningGroupWithdrawalModel.getListGroupUseID()), ListeningGroupWithdrawalModel.getLIST_GROUP_USEID_FILE_PATH());
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "监听该成员撤回消息-添加失败!");
+            return;
+        }
+        //该关键词要比下面的撤回关键词优先
+        if (raw_message.startsWith("取消监听该成员撤回消息") && boolSupeRuser) {
+            List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
+            if (atList.isEmpty()) {
+                return;
+            }
+            boolean temp = false;
+            for (JSONObject v : atList) {
+                String atID = v.getByPath("data.qq", String.class);
+                if (atID == null || atID.isBlank()) {
+                    continue;
+                }
+                if (ListeningGroupWithdrawalModel.delUserID(atID)) {
+                    temp = true;
+                }
+            }
+            if (temp) {
+                SignalUtil.sendGroupMessage(group_id, "已取消指定监听成员撤回消息队列");
+                FileUtil.writeUtf8String(JSONUtil.toJsonPrettyStr(ListeningGroupWithdrawalModel.getListGroupUseID()), ListeningGroupWithdrawalModel.getLIST_GROUP_USEID_FILE_PATH());
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "取消监听该成员撤回消息-取消失败!");
+            return;
+        }
+        //该关键词要比上面的撤回关键词底
         if (raw_message.contains("撤回")) { //让机器人撤回消息
             String messageReplyID = InformationUtil.getMessageReplyID(messageJson);
             if (messageReplyID.isEmpty()) {
@@ -600,13 +650,13 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
 
-        if (raw_message.contains("跑路")) {
-            String userATID = InformationUtil.getUserATID(dataGroup);
+        if (raw_message.contains("心碎碎")) {
+            String userATID = String.valueOf(InformationUtil.getMessageTypeList("at", messageJson).get(0));
             if (userATID.isEmpty()) {
                 log.info("获取userATID的值为空字符串");
                 return;
             }
-            String imgeUrl = "http://h.xiaocha.fun/api/pao.php?qq=" + userATID;
+            String imgeUrl = "http://h.xiaocha.fun/api/sui/sui.php?QQ=" + userATID;
             SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(userATID, imgeUrl, true));
             return;
         }
