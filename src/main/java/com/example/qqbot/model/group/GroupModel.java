@@ -59,26 +59,25 @@ public class GroupModel implements Runnable, IMessageEvent {
     /**
      * 表情包api
      */
-    private static final HashMap<String, String> headImageExpMap = new HashMap<>();
     private static final HashMap<String, String> walkImageUrlMap = new HashMap<>();
 
     private static final HashMap<String, String> mochaImageUrlMap = new HashMap<>();
 
     static {
-        headImageExpMap.put("抓", "grab");
-        headImageExpMap.put("拍瓜", "paigua");
-        headImageExpMap.put("顶球", "dingqiu");
-        headImageExpMap.put("咬", "bite");
-        headImageExpMap.put("看这个", "Lookatthis");
-        headImageExpMap.put("保抱肉肉", "baororo");
-        headImageExpMap.put("一起笑", "LaughTogether");
-        headImageExpMap.put("招财猫", "FortuneCat");
-        headImageExpMap.put("舞鸡腿", "DanceChickenLeg");
-        headImageExpMap.put("打年糕", "pound");
+        mochaImageUrlMap.put("抓", "https://api.xingzhige.com/API/grab/?qq=");
+        mochaImageUrlMap.put("拍瓜", "https://api.xingzhige.com/API/paigua/?qq=");
+        mochaImageUrlMap.put("顶球", "https://api.xingzhige.com/API/dingqiu/?qq=");
+        mochaImageUrlMap.put("咬", "https://api.xingzhige.com/API/bite/?qq=");
+        mochaImageUrlMap.put("看这个", "https://api.xingzhige.com/API/Lookatthis/?qq=");
+        mochaImageUrlMap.put("保抱肉肉", "https://api.xingzhige.com/API/baororo/?qq=");
+        mochaImageUrlMap.put("一起笑", "https://api.xingzhige.com/API/LaughTogether/?qq=");
+        mochaImageUrlMap.put("招财猫", "https://api.xingzhige.com/API/FortuneCat/?qq=");
+        mochaImageUrlMap.put("舞鸡腿", "https://api.xingzhige.com/API/DanceChickenLeg/?qq=");
+        mochaImageUrlMap.put("打年糕", "https://api.xingzhige.com/API/pound/?qq=");
+        mochaImageUrlMap.put("狠狠滴咬", "http://h.xiaocha.fun/api/yao/yao.php?QQ=");
         walkImageUrlMap.put("获取快手小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/ks_xjj.php?type=json");
         walkImageUrlMap.put("获取cos小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/hlxcos.php?type=json");
         walkImageUrlMap.put("获取快手二次元图片", "http://api.wqwlkj.cn/wqwlapi/ks_2cy.php?type=json");
-        mochaImageUrlMap.put("狠狠滴咬", "http://h.xiaocha.fun/api/yao/yao.php?QQ=");
     }
 
     /**
@@ -736,22 +735,6 @@ public class GroupModel implements Runnable, IMessageEvent {
             }
             log.info("发送" + key + "成功");
             return;
-        }
-        for (String key : headImageExpMap.keySet()) {
-            if (!(raw_message.startsWith(key))) {
-                continue;
-            }
-            String userATID = InformationUtil.getMessageOneAtID(messageJson);
-            if (userATID.isEmpty()) {
-                log.info("获取userATID的值为空字符串");
-                return;
-            }
-            if (SignalUtil.sendGroupMessage(group_id, DataJson.imageUrl(userATID, "https://api.xingzhige.com/API/" + headImageExpMap.get(key) + "/?qq=" + userATID, true).toString()).isEmpty()) {
-                log.info("发送" + key + "表情包失败!,at对方=" + userATID);
-                return;
-            }
-            log.info(key + "表情包,发送成功!,at对方=" + userATID);
-            break;
         }
         if (raw_message.startsWith("摸")) {
             List<JSONObject> at = InformationUtil.getMessageTypeList("at", messageJson);
