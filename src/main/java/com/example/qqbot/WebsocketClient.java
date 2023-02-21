@@ -4,13 +4,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.Subject;
-import com.example.qqbot.data.*;
-import com.example.qqbot.data.group.DataGroup;
-import com.example.qqbot.data.group.DataGroupDecrease;
-import com.example.qqbot.data.group.DataGroupRecall;
-import com.example.qqbot.data.group.DataInvitedGroup;
-import com.example.qqbot.model.*;
-import com.example.qqbot.model.group.*;
+import com.example.qqbot.data.MailingAddress;
+import com.example.qqbot.data.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
@@ -19,8 +14,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * @author byhgz
