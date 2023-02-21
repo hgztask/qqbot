@@ -29,6 +29,14 @@ public class PGRModel implements Runnable {
     @Getter
     private static final PGRModel pgrModel = new PGRModel();
 
+
+    /**
+     * PGR
+     */
+    @Getter
+    private static final List<String> PGR_CONSCIOUS_COLLOCATION = ListUtil.toList("意识共鸣", "共鸣什么", "共鸣啥", "共鸣选啥", "共鸣怎么选", "意识带什么",
+            "共鸣选哪个", "共鸣选什么", "意识推荐", "什么意识", "武器共鸣", "配队", "意识技能", "用啥意识", "带啥意识");
+
     /**
      * 工会关键词
      */
