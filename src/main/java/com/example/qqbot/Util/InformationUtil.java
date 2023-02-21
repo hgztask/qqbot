@@ -6,16 +6,12 @@ import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 信息处理
@@ -77,19 +73,37 @@ public class InformationUtil {
 
 
     /**
-     * 取被艾特方的QQ号码
+     * 获取消息中的所有艾特成员
      *
-     * @param dataGroup dataGroup对象
-     * @return 返回QQ号字符串或者空的字符串
+     * @param jsonArray json消息内容
+     * @return 应类型元素集合
      */
-    public static @NonNull String getUserATID(@NonNull DataGroup dataGroup) {
-        String userATID = InformationUtil.getUserATID(JSONUtil.parseObj(dataGroup));
+    public static @NonNull List<JSONObject> getMessageTypeByAtList(@NonNull JSONArray jsonArray) {
+        return getMessageTypeList("at", jsonArray);
+    }
+
+    /**
+     * 获取消息中的第一个at成员qq号码
+     *
+     * @param jsonArray json消息内容
+     * @return qq群员号码
+     */
+    public static String getMessageOneAtID(JSONArray jsonArray) {
+        JSONObject jsonObject;
         try {
-            Integer.valueOf(userATID);
-        } catch (NumberFormatException e) {
+            jsonObject = getMessageTypeByAtList(jsonArray).get(0);
+        } catch (Exception e) {
+            log.info("getMessageOneAtID出错了" + e.getMessage());
             return "";
         }
-        return userATID;
+        if (jsonObject.isEmpty()) {
+            return "";
+        }
+        String atID = jsonObject.getByPath("data.qq", String.class);
+        if (atID == null) {
+            return "";
+        }
+        return atID;
     }
 
 
@@ -264,28 +278,34 @@ public class InformationUtil {
 
 
     /**
-     * 获取message中的json所有图片列表
+     * 获取json消息中的所有图片列表
      *
      * @param jsonArray 消息列表
      * @return 图片列表
      */
-    public static List<JSONObject> getMessageImageList(@NonNull JSONArray jsonArray) {
-        List<String> typeList = jsonArray.getByPath("type", List.class);
-        List<JSONObject> dataList = jsonArray.getByPath("data", List.class);
-        ArrayList<JSONObject> imageList = new ArrayList<>();
-        for (int i = 0; i < typeList.size(); i++) {
-            if (!("image".equals(typeList.get(i)))) {
+    public static List<JSONObject> getMessageTypeImageList(@NonNull JSONArray jsonArray) {
+        return getMessageTypeList("image", jsonArray);
+    }
+
+    /**
+     * 获取消息列表中的所有的图片直链
+     *
+     * @param jsonArray 消息列表
+     * @return 图片列表
+     */
+    public static Set<String> getMessageImageURLList(@NonNull JSONArray jsonArray) {
+        List<JSONObject> messageTypeImageList = getMessageTypeImageList(jsonArray);
+        Set<String> set = new LinkedHashSet<>();
+        for (JSONObject jsonObject : messageTypeImageList) {
+            String url = jsonObject.getByPath("data.url", String.class);
+            if (url == null) {
                 continue;
             }
-            JSONObject entries = new JSONObject();
-            JSONObject data = dataList.get(0);
-            entries.set("file", data.get("file", String.class));
-            entries.set("subType", data.get("subType", String.class));
-            entries.set("url", data.get("url", String.class));
-            imageList.add(entries);
+            set.add(url);
         }
-        return imageList;
+        return set;
     }
+
 
     /**
      * 判断是否是url链接
