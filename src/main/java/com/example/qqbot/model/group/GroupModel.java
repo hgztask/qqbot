@@ -75,6 +75,8 @@ public class GroupModel implements Runnable, IMessageEvent {
         mochaImageUrlMap.put("舞鸡腿", "https://api.xingzhige.com/API/DanceChickenLeg/?qq=");
         mochaImageUrlMap.put("打年糕", "https://api.xingzhige.com/API/pound/?qq=");
         mochaImageUrlMap.put("狠狠滴咬", "http://h.xiaocha.fun/api/yao/yao.php?QQ=");
+        mochaImageUrlMap.put("滑稽锤你", "http://h.xiaocha.fun/api/chui/chui.php?QQ=");
+        mochaImageUrlMap.put("发怒拍闹钟", "http://h.xiaocha.fun/api/nu/nu.php?QQ=");
         walkImageUrlMap.put("获取快手小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/ks_xjj.php?type=json");
         walkImageUrlMap.put("获取cos小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/hlxcos.php?type=json");
         walkImageUrlMap.put("获取快手二次元图片", "http://api.wqwlkj.cn/wqwlapi/ks_2cy.php?type=json");
