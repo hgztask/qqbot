@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 public class ListeningGroupModel implements Runnable, IMessageEvent {
-    private static final File FILE = new File("E:\\监听群聊、推送群聊黑名单群聊.json");
+    private static final File FILE = new File("E:\\qqbot\\监听群聊、推送群聊黑名单群聊.json");
     /**
      * 监听群聊、推送群聊与黑名单群聊
      */
