@@ -6,6 +6,7 @@ import lombok.Data;
 
 /**
  * 撤回的消息数据层
+ * 实际用户撤回的结果
  *
  * @author byhgz
  * @version 1.0
