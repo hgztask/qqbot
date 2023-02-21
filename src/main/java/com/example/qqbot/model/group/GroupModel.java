@@ -1,7 +1,6 @@
 package com.example.qqbot.model.group;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
@@ -22,7 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -54,13 +56,6 @@ public class GroupModel implements Runnable, IMessageEvent {
     private static Set<String> BLACKGROUPID = GroupReReadingModel.getFileJson(BLACK_PATHF_FILE);
 
 
-    /**
-     * PGR
-     */
-    private static final List<String> PGR_CONSCIOUS_COLLOCATION = ListUtil.toList("意识共鸣", "共鸣什么", "共鸣啥", "共鸣选啥", "共鸣怎么选", "意识带什么",
-            "共鸣选哪个", "共鸣选什么", "意识推荐", "什么意识", "武器共鸣", "配队", "意识技能", "用啥意识", "带啥意识");
-
-
     private static final HashMap<String, String> headImageExpMap = new HashMap<>();
     private static final HashMap<String, String> wqwlkjImageUrlMap = new HashMap<>();
 
@@ -80,7 +75,6 @@ public class GroupModel implements Runnable, IMessageEvent {
         wqwlkjImageUrlMap.put("获取快手二次元图片", "http://api.wqwlkj.cn/wqwlapi/ks_2cy.php?type=json");
     }
 
-
     /**
      * 记录群员最后一个发言者
      * 用来判断该用户私发连续发送消息,达标则执行某些操作
@@ -92,12 +86,10 @@ public class GroupModel implements Runnable, IMessageEvent {
     @SuppressWarnings("all")
     private static final Map<String, Integer> user_idEqul = new HashMap<>(0);
 
-
     /**
      * 是否把群消息打印在控制台
      */
     private static boolean isPrintGroupMessageConsole = false;
-
 
     @Override
     @SuppressWarnings("all")
@@ -131,9 +123,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         if (isPrintGroupMessageConsole) {
             log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
         }
-
-
-        if (InformationUtil.isContainsMessAge(PGR_CONSCIOUS_COLLOCATION, raw_message) && !(group_id.equals("942611877"))) {
+        if (InformationUtil.isContainsMessAge(PGRModel.getPGR_CONSCIOUS_COLLOCATION(), raw_message) && !(group_id.equals("942611877"))) {
             PGRModel.consciousnessPGRTable(group_id, user_id);
             return;
         }
