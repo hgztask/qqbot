@@ -40,7 +40,7 @@ import java.util.concurrent.Executors;
 @Component
 public class Day60World implements Runnable, IMessageEvent {
 
-    private static final File PathFile = new File("E:\\每日60秒世界记录.json");
+    private static final File PathFile = new File("E:\\qqbot\\每日60秒世界记录.json");
     /**
      * 记录每个群的状态
      */
