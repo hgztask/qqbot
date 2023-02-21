@@ -6,6 +6,7 @@ import cn.hutool.http.Method;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.data.MailingAddress;
 import lombok.Getter;
 import lombok.NonNull;
@@ -334,6 +335,55 @@ public class SignalUtil {
         return SignalUtil.httpPost(PRIVATEENDPOINT, data);
     }
 
+    /**
+     * 给用户私发消息
+     *
+     * @return
+     */
+    public static JSONObject sendPrivateMessage(String user_id, JSONArray message) {
+        return sendPrivateMessage(user_id, message.toString());
+    }
+
+    /**
+     * 给用户私发消息
+     *
+     * @return
+     */
+    public static JSONObject sendPrivateMessage(String user_id, JSONObject message) {
+        JSONArray jsonArray = new JSONArray(1);
+        jsonArray.add(message);
+        return sendPrivateMessage(user_id, jsonArray);
+    }
+
+    /**
+     * 发送私聊消息,默认发给超级用户
+     * @param message 消息内容
+     * @return jsonobj对象
+     */
+    public static JSONObject sendPrivateMessage(String message) {
+        String admin = DataUserEights.SUPERUSER.get(0);
+        return sendPrivateMessage(admin, message);
+    }
+
+    /**
+     *  发送私聊消息,默认发给超级用户
+     * @param message 消息内容
+     * @return jsonobj对象
+     */
+    public static JSONObject sendPrivateMessage(JSONArray message){
+        return sendPrivateMessage(message.toString());
+    }
+    /**
+     *  发送私聊消息,默认发给超级用户
+     * @param message 消息内容
+     * @return jsonobj对象
+     */
+    public static JSONObject sendPrivateMessage(JSONObject message){
+        JSONArray jsonArray = new JSONArray(1);
+        jsonArray.add(message);
+        return sendPrivateMessage(jsonArray);
+    }
+
 
     /**
      * 撤回消息
@@ -347,6 +397,7 @@ public class SignalUtil {
     }
 
 
+
     /**
      * 根据消息ID获取原消息
      *
@@ -355,7 +406,7 @@ public class SignalUtil {
      */
     @SuppressWarnings("all")
     public static JSONObject getMessage(@NonNull String message_id) {
-        return SignalUtil.httpGet(SignalUtil.GET_MSG, "?message_id=" + message_id);
+        return SignalUtil.httpGet(GET_MSG, "?message_id=" + message_id);
     }
 
 
