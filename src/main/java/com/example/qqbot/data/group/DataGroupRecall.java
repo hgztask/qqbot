@@ -4,6 +4,7 @@ import lombok.Data;
 
 /**
  * 群消息撤回数据层
+ * 用于监听器响应的结果,非实际撤回的内容.仅作为有该撤回的动作数据
  *
  * @author byhgz
  * @version 1.0
