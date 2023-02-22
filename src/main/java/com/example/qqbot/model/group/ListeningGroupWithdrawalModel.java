@@ -7,6 +7,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
+import com.example.qqbot.Util.MessageUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataRecall;
 import com.example.qqbot.data.DataUserEights;
@@ -222,8 +223,9 @@ public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
         JSONObject sender = dataRecall.getSender();
         String user_id = sender.get("user_id", String.class);
         String nickname = sender.get("nickname", String.class);
+        String group_id = dataRecall.getGroup_id();
         JSONArray messageJson = dataRecall.getMessage();
-        GroupRecallModel.downloadMessageImageFIle(messageJson, user_id);
+        MessageUtil.downloadPGroupRecallImage(messageJson, "E:\\qqbot\\图片",group_id,user_id);
         SignalUtil.sendPrivateMessage(adminID, messageJson);
         log.info(CharSequenceUtil.format("被监听撤回消息成员:{} 撤回了一条消息", nickname));
         addMessage(user_id, messageJson);
