@@ -61,13 +61,16 @@ public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
      */
     private static Map<String, Set<JSONArray>> getFileMessageJson(File fIle) {
         Map<String, Set<JSONArray>> map = new HashMap<>(0);
-        Map jsonObject;
+        JSONObject jsonObject;
         try {
             jsonObject = JSONUtil.readJSONObject(fIle, StandardCharsets.UTF_8);
         } catch (Exception e) {
             return map;
         }
-        map.putAll(jsonObject);
+        for (String qqid : jsonObject.keySet()) {
+            map.put(qqid,jsonObject.get(qqid,Set.class));
+        }
+
         return map;
     }
 
