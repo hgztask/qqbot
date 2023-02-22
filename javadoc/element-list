@@ -1,0 +1,16 @@
+com.example.qqbot
+com.example.qqbot.data
+com.example.qqbot.data.bilibili
+com.example.qqbot.data.CQ
+com.example.qqbot.data.file
+com.example.qqbot.data.group
+com.example.qqbot.data.json
+com.example.qqbot.Event
+com.example.qqbot.face
+com.example.qqbot.function
+com.example.qqbot.model
+com.example.qqbot.model.group
+com.example.qqbot.model.LanZouYmodel
+com.example.qqbot.model.pgr
+com.example.qqbot.model.privateModel
+com.example.qqbot.Util
