@@ -3,8 +3,6 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.crypto.SecureUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
@@ -16,10 +14,6 @@ import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroupRecall;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * 群撤回逻辑层
@@ -57,7 +51,7 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
         String nickname = sender.get("nickname", String.class);
         String group_id = dataRecall.getGroup_id();
         JSONArray messageJson = dataRecall.getMessage();
-        downloadMessageImageFIle(messageJson, user_id);
+        MessageUtil.downloadPGroupRecallImage(messageJson, "E:\\qqbot\\图片",group_id,user_id);
         SignalUtil.sendPrivateMessage(CharSequenceUtil.format("""
                 ===群撤回消息记录====
                 群聊:{}
@@ -110,23 +104,6 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
     }
 
 
-    /**
-     * 下载撤回的图片文件
-     *
-     * @param messageJson json消息
-     * @param user_id     被撤回消息的群员
-     */
-    public static void downloadMessageImageFIle(JSONArray messageJson, String user_id) {
-        Set<String> typeImageURLList = MessageUtil.getTypeImageURLList(messageJson);
-        if (!(typeImageURLList.isEmpty())) {
-            @SuppressWarnings("all")
-            ExecutorService threadPool = Executors.newFixedThreadPool(typeImageURLList.size());
-            for (String url : typeImageURLList) {
-                log.info("已保存监听成员消息的图片文件");
-                threadPool.execute(() -> HttpUtil.downloadFile(url, "E:\\qqbot\\监听撤回获取到的图片\\" + user_id + "_文件名" + SecureUtil.md5(url) + ".jpg"));
-            }
-            threadPool.shutdown();
-        }
-    }
+
 
 }
