@@ -8,7 +8,7 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
-import com.example.qqbot.Util.InformationUtil;
+import com.example.qqbot.Util.MessageUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.data.Message;
@@ -330,7 +330,7 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
             SignalUtil.sendPrivateMessage(DataUserEights.SUPERUSER.get(0), raw_message);
             return false;
         }
-        if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
+        if (MessageUtil.isTypeRecord(dataGroup.getMessage())) {
             log.info("检测到语音类型,故不推送");
             return false;
         }

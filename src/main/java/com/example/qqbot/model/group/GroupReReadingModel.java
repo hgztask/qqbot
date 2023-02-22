@@ -3,7 +3,7 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.example.qqbot.Util.InformationUtil;
+import com.example.qqbot.Util.MessageUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
@@ -232,7 +232,7 @@ public class GroupReReadingModel implements Runnable {
             return;
         }
 
-        if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
+        if (MessageUtil.isTypeRecord(dataGroup.getMessage())) {
             log.info("检测到语音类型,故不复读");
             return;
         }

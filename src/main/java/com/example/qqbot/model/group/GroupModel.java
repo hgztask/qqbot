@@ -9,6 +9,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.InformationUtil;
+import com.example.qqbot.Util.MessageUtil;
 import com.example.qqbot.Util.NetworkUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataUserEights;
@@ -141,7 +142,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
         if (raw_message.startsWith("添加复读机成员") && boolSupeRuser) { //需要超级用户权限
             //该关键词触发条件要优先于下面的复读机,要不然会导致复读操作
-            String userATID = InformationUtil.getMessageOneAtID(messageJson);
+            String userATID = MessageUtil.getOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 return;
             }
@@ -149,7 +150,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         if (raw_message.startsWith("移除复读机成员") && boolSupeRuser) { //需要超级用户权限
-            String userATID = InformationUtil.getMessageOneAtID(messageJson);
+            String userATID = MessageUtil.getOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 return;
             }
@@ -382,7 +383,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         if (raw_message.startsWith("获取头像")) {
-            String userATID = InformationUtil.getMessageOneAtID(messageJson);
+            String userATID = MessageUtil.getOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 return;
             }
@@ -445,7 +446,7 @@ public class GroupModel implements Runnable, IMessageEvent {
 
         //该关键词要比下面的撤回关键词优先
         if (raw_message.startsWith("监听成员撤回消息") && boolSupeRuser) {
-            List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
+            List<JSONObject> atList = MessageUtil.getTypeList("at", messageJson);
             if (atList.isEmpty()) {
                 return;
             }
@@ -469,7 +470,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
         //该关键词要比下面的撤回关键词优先
         if (raw_message.startsWith("取消监听成员撤回消息") && boolSupeRuser) {
-            List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
+            List<JSONObject> atList = MessageUtil.getTypeList("at", messageJson);
             if (atList.isEmpty()) {
                 return;
             }
@@ -493,7 +494,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
         //该关键词要比下面的撤回关键词优先
         if (raw_message.startsWith("清空监听成员内存中的撤回消息") && boolSupeRuser) {
-            List<JSONObject> atList = InformationUtil.getMessageTypeList("at", messageJson);
+            List<JSONObject> atList = MessageUtil.getTypeList("at", messageJson);
             if (atList.isEmpty()) {
                 return;
             }
@@ -517,7 +518,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
         //该关键词要比下面的撤回关键词优先
         if (raw_message.startsWith("查询指定成员是否是监听成员") && boolSupeRuser) {
-            String oneAtID = InformationUtil.getMessageOneAtID(messageJson);
+            String oneAtID = MessageUtil.getOneAtID(messageJson);
             if (oneAtID.isEmpty()) {
                 return;
             }
@@ -530,11 +531,11 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
         //该关键词要比上面的撤回关键词底
         if (raw_message.contains("撤回")) { //让机器人撤回消息
-            String messageReplyID = InformationUtil.getMessageReplyID(messageJson);
+            String messageReplyID = MessageUtil.getReplyID(messageJson);
             if (messageReplyID.isEmpty()) {
                 return;
             }
-            List<JSONObject> ayTypeList = InformationUtil.getMessageTypeList("at", messageJson);
+            List<JSONObject> ayTypeList = MessageUtil.getTypeList("at", messageJson);
             if (ayTypeList.isEmpty()) {
                 return;
             }
@@ -685,7 +686,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
         if (raw_message.startsWith("心碎碎")) {
-            String userATID = InformationUtil.getMessageOneAtID(messageJson);
+            String userATID = MessageUtil.getOneAtID(messageJson);
             if (userATID.isEmpty()) {
                 log.info("获取userATID的值为空字符串");
                 return;
@@ -696,7 +697,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
         if (raw_message.contains("获取引用图片直链")) {
-            String replyID = InformationUtil.getMessageReplyID(messageJson);
+            String replyID = MessageUtil.getReplyID(messageJson);
             //根据消息ID获取原消息
             JSONObject message = SignalUtil.getMessage(replyID);
             if (message.isEmpty()) {
@@ -709,7 +710,7 @@ public class GroupModel implements Runnable, IMessageEvent {
                 log.info("byPath非Json对象或者为null");
                 return;
             }
-            Set<String> messageTypeList = InformationUtil.getMessageImageURLList(jsonArray);
+            Set<String> messageTypeList = MessageUtil.getImageURLList(jsonArray);
             SignalUtil.sendGroupMessage(group_id, "引用图片直链:\n" + JSONUtil.toJsonPrettyStr(messageTypeList));
             return;
         }
@@ -718,7 +719,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             if (!(raw_message.startsWith(key))) {
                 continue;
             }
-            String atID = InformationUtil.getMessageOneAtID(messageJson);
+            String atID = MessageUtil.getOneAtID(messageJson);
             if (atID.isEmpty()) {
                 return;
             }
@@ -752,7 +753,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         if (raw_message.startsWith("摸")) {
-            List<JSONObject> at = InformationUtil.getMessageTypeList("at", messageJson);
+            List<JSONObject> at = MessageUtil.getTypeList("at", messageJson);
             if (at.isEmpty()) {
                 return;
             }
@@ -898,7 +899,7 @@ public class GroupModel implements Runnable, IMessageEvent {
             return false;
         }
 
-        if (InformationUtil.isMessageTypeRecord(dataGroup.getMessage())) {
+        if (MessageUtil.isTypeRecord(dataGroup.getMessage())) {
             log.info("是语音消息!");
             return false;
         }
