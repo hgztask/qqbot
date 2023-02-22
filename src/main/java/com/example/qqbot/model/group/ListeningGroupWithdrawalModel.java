@@ -3,13 +3,10 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.crypto.SecureUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
-import com.example.qqbot.Util.MessageUtil;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.DataRecall;
 import com.example.qqbot.data.DataUserEights;
@@ -22,8 +19,6 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * 监听指定群聊成员撤回内容
@@ -34,7 +29,7 @@ import java.util.concurrent.Executors;
  */
 @Slf4j
 @Component
-public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
+public class ListeningGroupWithdrawalModel   implements Runnable, IMessageEvent {
 
 
     @Getter
@@ -56,6 +51,7 @@ public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
     private static final String adminID = DataUserEights.SUPERUSER.get(0);
 
     private DataGroupRecall dataGroupRecall;
+
 
 
     /**
@@ -224,7 +220,7 @@ public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
         String user_id = sender.get("user_id", String.class);
         String nickname = sender.get("nickname", String.class);
         JSONArray messageJson = dataRecall.getMessage();
-        downloadMessageImageFIle(messageJson, user_id);
+        GroupRecallModel.downloadMessageImageFIle(messageJson, user_id);
         SignalUtil.sendPrivateMessage(adminID, messageJson);
         log.info(CharSequenceUtil.format("被监听撤回消息成员:{} 撤回了一条消息", nickname));
         addMessage(user_id, messageJson);
@@ -233,26 +229,6 @@ public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
             return;
         }
         log.info("保存监听的成员和撤回的数据到本地-失败!");
-    }
-
-
-    /**
-     * 下载撤回的图片文件
-     *
-     * @param messageJson json消息
-     * @param user_id     被撤回消息的群员
-     */
-    private void downloadMessageImageFIle(JSONArray messageJson, String user_id) {
-        Set<String> typeImageURLList = MessageUtil.getTypeImageURLList(messageJson);
-        if (!(typeImageURLList.isEmpty())) {
-            @SuppressWarnings("all")
-            ExecutorService threadPool = Executors.newFixedThreadPool(typeImageURLList.size());
-            for (String url : typeImageURLList) {
-                log.info("已保存监听成员消息的图片文件");
-                threadPool.execute(() -> HttpUtil.downloadFile(url, "E:\\qqbot\\监听撤回获取到的图片\\" + user_id + "_文件名" + SecureUtil.md5(url) + ".jpg"));
-            }
-            threadPool.shutdown();
-        }
     }
 
 
