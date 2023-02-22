@@ -28,7 +28,7 @@ public class MessageUtil {
      * @param jsonArray messageJson对象
      * @return 对应类型元素集合
      */
-    public static @NonNull List<JSONObject> getMessageTypeList(@NonNull String type, @NonNull JSONArray jsonArray) {
+    public static @NonNull List<JSONObject> getTypeList(@NonNull String type, @NonNull JSONArray jsonArray) {
         ArrayList<JSONObject> arrayList = new ArrayList<>();
         List<String> typeList = jsonArray.getByPath("type", List.class);
         if (typeList == null || typeList.isEmpty()) {
@@ -50,8 +50,8 @@ public class MessageUtil {
      * @param jsonArray 消息列表
      * @return 图片列表
      */
-    public static List<JSONObject> getMessageTypeImageList(@NonNull JSONArray jsonArray) {
-        return MessageUtil.getMessageTypeList("image", jsonArray);
+    public static List<JSONObject> getTypeImageList(@NonNull JSONArray jsonArray) {
+        return MessageUtil.getTypeList("image", jsonArray);
     }
 
 
@@ -61,8 +61,8 @@ public class MessageUtil {
      * @param jsonArray 消息列表
      * @return 图片列表
      */
-    public static Set<String> getMessageImageURLList(@NonNull JSONArray jsonArray) {
-        List<JSONObject> messageTypeImageList = MessageUtil.getMessageTypeImageList(jsonArray);
+    public static Set<String> getImageURLList(@NonNull JSONArray jsonArray) {
+        List<JSONObject> messageTypeImageList = MessageUtil.getTypeImageList(jsonArray);
         Set<String> set = new LinkedHashSet<>();
         for (JSONObject jsonObject : messageTypeImageList) {
             String url = jsonObject.getByPath("data.url", String.class);
@@ -79,7 +79,7 @@ public class MessageUtil {
      *
      * @param message json消息内容
      */
-    public static String getMessageReplyID(JSONArray message) {
+    public static String getReplyID(JSONArray message) {
         String byPath = message.getByPath("[0].type", String.class);
         if (byPath == null || byPath.isEmpty()) {
             log.info("获取失败!");
@@ -103,7 +103,7 @@ public class MessageUtil {
      * @param messageJsonArray 消息内容(非原始内容,而是json)
      * @return 类型列表
      */
-    public static List<String> getMessageTypeList(JSONArray messageJsonArray) {
+    public static List<String> getTypeList(JSONArray messageJsonArray) {
         return messageJsonArray.getByPath("type", List.class);
     }
 
@@ -113,8 +113,8 @@ public class MessageUtil {
      * @param messageJsonArray json消息内容中的类型列表
      * @return 是否是
      */
-    public static boolean isMessageTypeRecord(JSONArray messageJsonArray) {
-        List<String> messageTypeList = getMessageTypeList(messageJsonArray);
+    public static boolean isTypeRecord(JSONArray messageJsonArray) {
+        List<String> messageTypeList = getTypeList(messageJsonArray);
         for (String type : messageTypeList) {
             if ("record".equals(type)) {
                 return true;
@@ -130,8 +130,8 @@ public class MessageUtil {
      * @param jsonArray json消息内容
      * @return 应类型元素集合
      */
-    public static @NonNull List<JSONObject> getMessageTypeByAtList(@NonNull JSONArray jsonArray) {
-        return MessageUtil.getMessageTypeList("at", jsonArray);
+    public static @NonNull List<JSONObject> getTypeByAtList(@NonNull JSONArray jsonArray) {
+        return MessageUtil.getTypeList("at", jsonArray);
     }
 
     /**
@@ -140,10 +140,10 @@ public class MessageUtil {
      * @param jsonArray json消息内容
      * @return qq群员号码
      */
-    public static String getMessageOneAtID(JSONArray jsonArray) {
+    public static String getOneAtID(JSONArray jsonArray) {
         JSONObject jsonObject;
         try {
-            jsonObject = getMessageTypeByAtList(jsonArray).get(0);
+            jsonObject = getTypeByAtList(jsonArray).get(0);
         } catch (Exception e) {
             log.info("getMessageOneAtID出错了" + e.getMessage());
             return "";
