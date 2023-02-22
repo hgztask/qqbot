@@ -278,7 +278,7 @@ public class MessageUtil {
      * @param user_id     用户
      */
     public static void downloadGroupImage(JSONArray messageJson, String path, String group, String user_id) {
-        downloadMessageImageFIle(messageJson, path + "//群聊//" + group + "//" + user_id);
+        downloadMessageImageFIle(messageJson, path + "//群聊//" + group + "//" + user_id+"//");
     }
 
 
@@ -290,7 +290,7 @@ public class MessageUtil {
      * @param group       群号
      * @param user_id     用户
      */
-    public static void downloadPGroupRecallImage(JSONArray messageJson, String path, String group, String user_id) {
+    public static void downloadGroupRecallImage(JSONArray messageJson, String path, String group, String user_id) {
         downloadMessageImageFIle(messageJson, path + "//群聊撤回//" + group + "//" + user_id+"//");
     }
 
