@@ -29,7 +29,7 @@ import java.util.*;
  */
 @Slf4j
 @Component
-public class ListeningGroupWithdrawalModel   implements Runnable, IMessageEvent {
+public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
 
 
     @Getter
@@ -51,7 +51,6 @@ public class ListeningGroupWithdrawalModel   implements Runnable, IMessageEvent 
     private static final String adminID = DataUserEights.SUPERUSER.get(0);
 
     private DataGroupRecall dataGroupRecall;
-
 
 
     /**
@@ -103,6 +102,10 @@ public class ListeningGroupWithdrawalModel   implements Runnable, IMessageEvent 
      */
     public static boolean addUserID(String user_id) {
         if (listGroupUseID.contains(user_id)) {
+            return false;
+        }
+        if (DataUserEights.BOTUSERID.contains(user_id)) {
+            //不需要把机器人监听
             return false;
         }
         return listGroupUseID.add(user_id);
