@@ -6,10 +6,7 @@ import cn.hutool.json.JSONUtil;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 消息处理
@@ -61,7 +58,7 @@ public class MessageUtil {
      * @param jsonArray 消息列表
      * @return 图片列表
      */
-    public static Set<String> getImageURLList(@NonNull JSONArray jsonArray) {
+    public static Set<String> getTypeImageURLList(@NonNull JSONArray jsonArray) {
         List<JSONObject> messageTypeImageList = MessageUtil.getTypeImageList(jsonArray);
         Set<String> set = new LinkedHashSet<>();
         for (JSONObject jsonObject : messageTypeImageList) {
@@ -73,6 +70,28 @@ public class MessageUtil {
         }
         return set;
     }
+
+    /**
+     * 获取消息列表中的所有的图片直链
+     *
+     * @param typeImageList 对应已经后去消息中指定类型或者手游类型得List列表
+     * @return 图片直链集合
+     */
+    public static Set<String> getTypeImageURLList(List<JSONObject> typeImageList) {
+        HashSet<String> set = new HashSet<>();
+        if (!(isTypeImage(typeImageList))) {
+            return set;
+        }
+        for (JSONObject entries : typeImageList) {
+            String url = entries.getByPath("data.url", String.class);
+            if (url == null) {
+                continue;
+            }
+            set.add(url);
+        }
+        return set;
+    }
+
 
     /**
      * 回复时所引用的消息id
@@ -94,7 +113,6 @@ public class MessageUtil {
         }
         return id;
     }
-
 
 
     /**
@@ -159,7 +177,6 @@ public class MessageUtil {
     }
 
 
-
     /**
      * 获取中消息内容中的json类型的值的类型列表
      *
@@ -173,7 +190,7 @@ public class MessageUtil {
     /**
      * 判断单个消息类型列表中是否有指定类型元素
      *
-     * @param type 指定类型
+     * @param type       指定类型
      * @param jsonObject 消息类型元素
      * @return 是否是
      */
@@ -210,11 +227,11 @@ public class MessageUtil {
      * 判断消息类型列表中是否有图片类型元素
      * 该方法是针对于获取过元素类型的列表,不支持未获取的过元素对内的列表
      *
-     * @param jsonObjectList 消息类型列表
+     * @param typeImageList 消息类型列表
      * @return 是否有
      */
-    public static boolean isTypeImage(List<JSONObject> jsonObjectList) {
-        for (JSONObject jsonObject : jsonObjectList) {
+    public static boolean isTypeImage(List<JSONObject> typeImageList) {
+        for (JSONObject jsonObject : typeImageList) {
             return isTypeImage(jsonObject);
         }
         return false;
@@ -229,7 +246,6 @@ public class MessageUtil {
     public static boolean isTypeImage(JSONObject jsonObject) {
         return isTypeValue("image", jsonObject);
     }
-
 
 
 }
