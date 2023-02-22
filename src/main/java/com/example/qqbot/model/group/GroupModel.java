@@ -114,6 +114,13 @@ public class GroupModel implements Runnable, IMessageEvent {
         JSONArray messageJson = dataGroup.getMessage();
         Set<String> re_reading_member_set = GroupReReadingModel.getMEMBER_SET();
 
+
+        Set<String> typeImageURLList = MessageUtil.getTypeImageURLList(messageJson);
+        for (String url : typeImageURLList) {
+            MessageUtil.downloadGroupImage(messageJson,  group_id, user_id);
+        }
+
+
         //是否是超级用户发的消息
         boolean boolSupeRuser = DataUserEights.SUPERUSER.contains(user_id);
 

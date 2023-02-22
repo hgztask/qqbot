@@ -225,7 +225,7 @@ public class ListeningGroupWithdrawalModel implements Runnable, IMessageEvent {
         String nickname = sender.get("nickname", String.class);
         String group_id = dataRecall.getGroup_id();
         JSONArray messageJson = dataRecall.getMessage();
-        MessageUtil.downloadPGroupRecallImage(messageJson, "E:\\qqbot\\图片",group_id,user_id);
+        MessageUtil.downloadGroupRecallImage(messageJson,group_id,user_id);
         SignalUtil.sendPrivateMessage(adminID, messageJson);
         log.info(CharSequenceUtil.format("被监听撤回消息成员:{} 撤回了一条消息", nickname));
         addMessage(user_id, messageJson);

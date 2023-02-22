@@ -51,7 +51,7 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
         String nickname = sender.get("nickname", String.class);
         String group_id = dataRecall.getGroup_id();
         JSONArray messageJson = dataRecall.getMessage();
-        MessageUtil.downloadGroupRecallImage(messageJson, "E:\\qqbot\\图片",group_id,user_id);
+        MessageUtil.downloadGroupRecallImage(messageJson, group_id,user_id);
         SignalUtil.sendPrivateMessage(CharSequenceUtil.format("""
                 ===群撤回消息记录====
                 群聊:{}
