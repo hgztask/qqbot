@@ -515,6 +515,19 @@ public class GroupModel implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id, "清空监听成员内存中的撤回消息-失败!");
             return;
         }
+        //该关键词要比下面的撤回关键词优先
+        if (raw_message.startsWith("查询指定成员是否是监听成员") && boolSupeRuser) {
+            String oneAtID = InformationUtil.getMessageOneAtID(messageJson);
+            if (oneAtID.isEmpty()) {
+                return;
+            }
+            if (ListeningGroupWithdrawalModel.readUserID(oneAtID)) {
+                SignalUtil.sendGroupMessage(group_id, "该成员已在监听状态");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "该成员未在监听状态");
+            return;
+        }
         //该关键词要比上面的撤回关键词底
         if (raw_message.contains("撤回")) { //让机器人撤回消息
             String messageReplyID = InformationUtil.getMessageReplyID(messageJson);
