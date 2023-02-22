@@ -710,7 +710,7 @@ public class GroupModel implements Runnable, IMessageEvent {
                 log.info("byPath非Json对象或者为null");
                 return;
             }
-            Set<String> messageTypeList = MessageUtil.getImageURLList(jsonArray);
+            Set<String> messageTypeList = MessageUtil.getTypeImageURLList(jsonArray);
             SignalUtil.sendGroupMessage(group_id, "引用图片直链:\n" + JSONUtil.toJsonPrettyStr(messageTypeList));
             return;
         }
