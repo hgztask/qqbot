@@ -117,7 +117,7 @@ public class GroupModel implements Runnable, IMessageEvent {
 
         Set<String> typeImageURLList = MessageUtil.getTypeImageURLList(messageJson);
         for (String url : typeImageURLList) {
-            MessageUtil.downloadGroupImage(messageJson,  group_id, user_id);
+            MessageUtil.downloadGroupImage(messageJson, group_id, user_id);
         }
 
 
@@ -691,6 +691,15 @@ public class GroupModel implements Runnable, IMessageEvent {
             }
             return;
         }
+        if (raw_message.startsWith("获取群成员列表") && boolSupeRuser) {
+            List<JSONObject> dataList = SignalUtil.getGroupMemberList(group_id, true).getByPath("data", List.class);
+            if (dataList == null || dataList.isEmpty()) {
+                return;
+            }
+//            File file = FileUtil.writeUtf8String(JSONUtil.toJsonPrettyStr(dataList), new File("E:\\群成员列表.json"));
+//            SignalUtil.sendGroupMessage(group_id, "已保存在本地文件" + file.getName());
+        }
+
 
         if (raw_message.startsWith("心碎碎")) {
             String userATID = MessageUtil.getOneAtID(messageJson);
