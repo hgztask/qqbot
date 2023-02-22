@@ -1,9 +1,11 @@
 # qqbot
-自己写着用的QQ机器人
+自己写着用的QQ机器人,需要配合[go-cqhttp](https://docs.go-cqhttp.org/)食用
 
 有些功能还没有完善,也就将就用
 
+
 群功能有
+
 翻译+翻译的内容
 
 获取b站用户信息+用户uid
