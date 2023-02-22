@@ -5,14 +5,19 @@ import lombok.Data;
 import java.util.Objects;
 
 /**
+ * 群成员列表数据层和群成员信息
+ * 但对于同一个群组的同一个成员<br>
+ * 获取列表时和获取单独的成员信息时<br>
+ * 某些字段可能有所不同<br>
+ * 例如 area、title 等字段在获取列表时无法获得<br>
+ * 具体应以单独的成员信息为准
  *
- * 群成员列表数据层
  * @author byhgz
  * @version 1.0
  * @date 2023/2/22 20:41
  */
 @Data
-public class DataGroupMemberList {
+public class DataGroupMember {
 
     /**
      * 群号
@@ -38,10 +43,7 @@ public class DataGroupMemberList {
      * 年龄
      */
     private int age;
-    /**
-     * 地区
-     */
-    private String area;
+
     /**
      * 加群时间戳
      */
@@ -63,9 +65,16 @@ public class DataGroupMemberList {
      */
     private boolean unfriendly;
     /**
+     * 地区
+     */
+    private String area;
+
+    /**
      * 专属头衔
      */
     private String title;
+
+
     /**
      * 专属头衔过期时间戳
      */
@@ -87,7 +96,7 @@ public class DataGroupMemberList {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        DataGroupMemberList that = (DataGroupMemberList) o;
+        DataGroupMember that = (DataGroupMember) o;
         return Objects.equals(group_id, that.group_id) && Objects.equals(user_id, that.user_id);
     }
 
