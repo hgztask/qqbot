@@ -1,5 +1,7 @@
 package com.example.qqbot.Util;
 
+import cn.hutool.crypto.SecureUtil;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -7,6 +9,8 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 消息处理
@@ -245,6 +249,72 @@ public class MessageUtil {
      */
     public static boolean isTypeImage(JSONObject jsonObject) {
         return isTypeValue("image", jsonObject);
+    }
+
+
+    /**
+     * 下载聊天图片文件中的
+     *
+     * @param messageJson json消息
+     */
+    public static void downloadMessageImageFIle(JSONArray messageJson, String path) {
+        Set<String> typeImageURLList = MessageUtil.getTypeImageURLList(messageJson);
+        if (!(typeImageURLList.isEmpty())) {
+            @SuppressWarnings("all")
+            ExecutorService threadPool = Executors.newFixedThreadPool(typeImageURLList.size());
+            for (String url : typeImageURLList) {
+                threadPool.execute(() -> HttpUtil.downloadFile(url, path + SecureUtil.md5(url) + ".jpg"));
+            }
+            threadPool.shutdown();
+        }
+    }
+
+    /**
+     * 针对群聊的保存图片功能
+     *
+     * @param messageJson json消息
+     * @param path        主路径
+     * @param group       群聊号
+     * @param user_id     用户
+     */
+    public static void downloadGroupImage(JSONArray messageJson, String path, String group, String user_id) {
+        downloadMessageImageFIle(messageJson, path + "//群聊//" + group + "//" + user_id);
+    }
+
+
+    /**
+     * 针对群聊撤回时保存图片功能
+     *
+     * @param messageJson json消息
+     * @param path        主要路径
+     * @param group       群号
+     * @param user_id     用户
+     */
+    public static void downloadPGroupRecallImage(JSONArray messageJson, String path, String group, String user_id) {
+        downloadMessageImageFIle(messageJson, path + "//群聊撤回//" + group + "//" + user_id);
+    }
+
+
+    /**
+     * 针对私聊的保存图片功能
+     *
+     * @param messageJson json消息
+     * @param path        主路径
+     * @param user_id     用户
+     */
+    public static void downloadProvideImage(JSONArray messageJson, String path, String user_id) {
+        downloadMessageImageFIle(messageJson, path + "//私聊//" + user_id);
+    }
+
+    /**
+     * 针对私聊撤回时保存图片功能
+     *
+     * @param messageJson json消息
+     * @param path        主要路径
+     * @param user_id     用户
+     */
+    public static void downloadProvideRecallImage(JSONArray messageJson, String path, String user_id) {
+        downloadMessageImageFIle(messageJson, path + "//私聊撤回//" + user_id);
     }
 
 
