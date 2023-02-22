@@ -107,6 +107,11 @@ public class SignalUtil {
      */
     private static final String GET_VERSION_INFO = "/get_version_info";
 
+    /**
+     * 获取群成员列表
+     */
+    private static final String GET_GROUP_MEMBER_LIST = "/get_group_member_list";
+
 
     private static final HashMap<String, String> headers = new HashMap<>();
 
@@ -356,6 +361,7 @@ public class SignalUtil {
 
     /**
      * 发送私聊消息,默认发给超级用户
+     *
      * @param message 消息内容
      * @return jsonobj对象
      */
@@ -365,19 +371,22 @@ public class SignalUtil {
     }
 
     /**
-     *  发送私聊消息,默认发给超级用户
+     * 发送私聊消息,默认发给超级用户
+     *
      * @param message 消息内容
      * @return jsonobj对象
      */
-    public static JSONObject sendPrivateMessage(JSONArray message){
+    public static JSONObject sendPrivateMessage(JSONArray message) {
         return sendPrivateMessage(message.toString());
     }
+
     /**
-     *  发送私聊消息,默认发给超级用户
+     * 发送私聊消息,默认发给超级用户
+     *
      * @param message 消息内容
      * @return jsonobj对象
      */
-    public static JSONObject sendPrivateMessage(JSONObject message){
+    public static JSONObject sendPrivateMessage(JSONObject message) {
         JSONArray jsonArray = new JSONArray(1);
         jsonArray.add(message);
         return sendPrivateMessage(jsonArray);
@@ -396,7 +405,6 @@ public class SignalUtil {
     }
 
 
-
     /**
      * 根据消息ID获取原消息
      *
@@ -405,7 +413,7 @@ public class SignalUtil {
      */
     @SuppressWarnings("all")
     public static JSONObject getMessage(@NonNull String message_id) {
-        if (message_id=="") {
+        if (message_id == "") {
             return getJSONOBJNULL();
         }
         return SignalUtil.httpGet(GET_MSG, "?message_id=" + message_id);
@@ -559,6 +567,24 @@ public class SignalUtil {
      */
     public static JSONObject get_version_info() {
         return httpPost(GET_VERSION_INFO);
+    }
+
+    /**
+     * 获取群成员列表
+     * 每个元素的内容和上面的 get_group_member_info 接口相同<br>
+     * 但对于同一个群组的同一个成员, 获取列表时和获取单独的成员信息时<br>
+     * 某些字段可能有所不同, 例如 area、title 等字段在获取列表时无法获得<br>
+     * 具体应以单独的成员信息为准。
+     *
+     * @param group_id 群号
+     * @param no_cache 是否不使用缓存（使用缓存可能更新不及时, 但响应更快
+     * @return 响应内容为 json 数组,
+     */
+    public static JSONObject getGroupMemberList(String group_id, boolean no_cache) {
+        HashMap<String, Object> map = new HashMap<>(2);
+        map.put("group_id", group_id);
+        map.put("no_cache", no_cache);
+        return httpPost(GET_GROUP_MEMBER_LIST, map);
     }
 
 
