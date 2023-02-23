@@ -12,10 +12,7 @@ import lombok.Data;
 @Data
 public class DataPoke {
 
-    /**
-     * 消息类型
-     */
-    private String notice_type;
+
 
     /**
      * 时间戳
