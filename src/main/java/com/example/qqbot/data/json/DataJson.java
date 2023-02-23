@@ -135,6 +135,22 @@ public class DataJson {
         return image;
     }
 
+
+
+    /**
+     *  封装json样式的video类型消息
+     *  俺需要传入file类型使用
+     * @param file 路径or网络路径or缓存文件
+     * @return
+     */
+    public static JSONObject video(String file) {
+        JSONObject video = type("video");
+        JSONObject data = new JSONObject(2);
+        video.set("data", data);
+        data.set("file", file);
+        return video;
+    }
+
     /**
      * 封装json样式的video类型消息
      * 只能发送网络视频
@@ -152,6 +168,20 @@ public class DataJson {
         data.set("url", url);
         return video;
     }
+
+    /**
+     * 封装json样式的video类型消息
+     * 只能发送网络视频
+     * 其他请看官方文档
+     *
+     * @param file 文件名
+     * @return jsonObj对象
+     */
+    public static JSONObject videoFile(String file) {
+        return video("file:///" + file);
+    }
+
+
 
     /**
      * 群戳一戳
