@@ -59,7 +59,7 @@ public class MessageUtil {
 
     /**
      * 获取json消息中的视频
-     * 由于视频会占用整条消息,不会有别的样式元素,故直接取第一个即可
+     * 由于视频会占用整条消息,不会有别的样式元素,也就是一条消息只会有一个视频样式且无其他元素
      *
      * @param jsonArray json样式消息
      * @return json视频样式
@@ -295,6 +295,19 @@ public class MessageUtil {
         HttpUtil.downloadFile(url, path + fileNmae);
     }
 
+
+    /**
+     * 下载群内资源
+     *
+     * @param group_id 群号
+     * @param user_id  用户
+     * @param url      图片直链
+     * @param fileName 文件名
+     */
+    private static void downloadGroupRes(String url, String type, String fileName, String group_id, String user_id) {
+        downloadFIle(url, "E:\\qqbot\\" + type + getTimePathImage() + group_id + "\\" + user_id + "\\", fileName);
+    }
+
     /**
      * 针对群聊的保存图片功能
      * 该方法可以指定文件名
@@ -305,7 +318,19 @@ public class MessageUtil {
      * @param fileName 文件名
      */
     public static void downloadGroupImage(String group_id, String user_id, String url, String fileName) {
-        downloadFIle(url, "E:\\qqbot\\群聊图片" + getTimePathImage() + group_id + "\\" + user_id + "\\", fileName);
+        downloadGroupRes(url, "群聊图片", fileName, group_id, user_id);
+    }
+
+    /**
+     * 针对群聊保存视频功能
+     *
+     * @param group_id
+     * @param user_id
+     * @param url
+     * @param fileName
+     */
+    public static void downloadGroupVideo(String group_id, String user_id, String url, String fileName) {
+        downloadGroupRes(url, "群聊视频", fileName, group_id, user_id);
     }
 
 
@@ -321,6 +346,20 @@ public class MessageUtil {
         String url = jsonObject.getByPath("data.url", String.class);
         downloadGroupImage(group_id, user_id, url, file.replace(".image", ".jpg"));
     }
+
+    /**
+     * 针对群聊的保存视频功能
+     *
+     * @param typeVideo json图片样式
+     * @param group_id  群号
+     * @param user_id   qq号
+     */
+    public static void downloadGroupVideo(@NonNull JSONObject typeVideo, String group_id, String user_id) {
+        String file = typeVideo.getByPath("data.file", String.class);
+        String url = typeVideo.getByPath("data.url", String.class);
+        downloadGroupVideo(group_id, user_id, url, file.replace(".video", ".mp4"));
+    }
+
 
     /**
      * 针对群聊的保存图片功能
@@ -344,6 +383,25 @@ public class MessageUtil {
             threadPool.shutdown();
         }
     }
+
+
+    /**
+     * 针对群聊的保存视频功能
+     * 多线程执行,响应快
+     *
+     * @param group_id 群号
+     * @param user_id  QQ号
+     */
+    public static void downloadGroupVideoThread(JSONObject typeVideo, String group_id, String user_id) {
+        @SuppressWarnings("all")
+        ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
+        try {
+            threadExecutor.execute(() -> downloadGroupVideo(typeVideo, group_id, user_id));
+        } finally {
+            threadExecutor.shutdown();
+        }
+    }
+
 
     /**
      * 针对群聊撤回时保存图片功能
