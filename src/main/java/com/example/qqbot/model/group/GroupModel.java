@@ -80,6 +80,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         mochaImageUrlMap.put("狠狠滴咬", "http://h.xiaocha.fun/api/yao/yao.php?QQ=");
         mochaImageUrlMap.put("滑稽锤你", "http://h.xiaocha.fun/api/chui/chui.php?QQ=");
         mochaImageUrlMap.put("发怒拍闹钟", "http://h.xiaocha.fun/api/nu/nu.php?QQ=");
+        mochaImageUrlMap.put("摸", "http://api.wqwlkj.cn/wqwlapi/mo.php?qq=");
         walkImageUrlMap.put("获取快手小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/ks_xjj.php?type=json");
         walkImageUrlMap.put("获取cos小姐姐图片", "http://api.wqwlkj.cn/wqwlapi/hlxcos.php?type=json");
         walkImageUrlMap.put("获取快手二次元图片", "http://api.wqwlkj.cn/wqwlapi/ks_2cy.php?type=json");
@@ -777,10 +778,11 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         for (String key : mochaImageUrlMap.keySet()) {
-            if (!(raw_message.startsWith(key))) {
+            if (!(raw_message.contains(key))) {
                 continue;
             }
             String atID = MessageUtil.getOneAtID(messageJson);
+            System.out.println(atID);
             if (atID.isEmpty()) {
                 return;
             }
@@ -791,7 +793,7 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
         for (String key : walkImageUrlMap.keySet()) {
-            if (!(key.equals(raw_message))) {
+            if (!(raw_message.contains(key))) {
                 continue;
             }
             SignalUtil.sendGroupMessage(group_id, "正在请求" + key + "中!");
@@ -811,30 +813,6 @@ public class GroupModel implements Runnable, IMessageEvent {
                 return;
             }
             log.info("发送" + key + "成功");
-            return;
-        }
-        if (raw_message.startsWith("摸")) {
-            List<JSONObject> at = MessageUtil.getTypeList("at", messageJson);
-            if (at.isEmpty()) {
-                return;
-            }
-            ExecutorService threadPool = Executors.newFixedThreadPool(at.size());
-            try {
-                for (JSONObject jsonObject : at) {
-                    String qq = jsonObject.getByPath("data.qq", String.class);
-                    JSONArray jsonArray = new JSONArray();
-                    jsonArray.add(DataJson.at(user_id));
-                    jsonArray.add(DataJson.imageUrl(qq, "http://api.wqwlkj.cn/wqwlapi/mo.php?qq=" + qq, true));
-                    threadPool.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            SignalUtil.sendGroupMessage(group_id, jsonArray);
-                        }
-                    });
-                }
-            } finally {
-                threadPool.shutdown();
-            }
             return;
         }
 
