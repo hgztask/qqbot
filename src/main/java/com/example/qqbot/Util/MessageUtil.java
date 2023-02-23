@@ -58,6 +58,22 @@ public class MessageUtil {
 
 
     /**
+     * 获取json消息中的视频
+     * 由于视频会占用整条消息,不会有别的样式元素,故直接取第一个即可
+     *
+     * @param jsonArray json样式消息
+     * @return json视频样式
+     */
+    public static JSONObject getTypeVideo(JSONArray jsonArray) {
+        List<JSONObject> video = MessageUtil.getTypeList("video", jsonArray);
+        if (video.isEmpty()) {
+            return SignalUtil.getJSONOBJNULL();
+        }
+        return video.get(0);
+    }
+
+
+    /**
      * 获取消息列表中的所有的图片直链
      *
      * @param jsonArray 消息列表
