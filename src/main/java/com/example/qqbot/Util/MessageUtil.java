@@ -268,63 +268,109 @@ public class MessageUtil {
         return String.format("\\%s年\\%s月\\%s日\\%s时\\", year, month, day, h);
     }
 
+
     /**
-     * 下载聊天图片文件中的
+     * 下载文件
      *
-     * @param messageJson json消息
+     * @param url      图片直链接
+     * @param path     存储路径
+     * @param fileNmae 文件名
      */
-    public static void downloadMessageImageFIle(JSONArray messageJson, String path) {
-        Set<String> typeImageURLList = MessageUtil.getTypeImageURLList(messageJson);
-        if (!(typeImageURLList.isEmpty())) {
-            @SuppressWarnings("all")
-            ExecutorService threadPool = Executors.newFixedThreadPool(typeImageURLList.size());
-            for (String url : typeImageURLList) {
-                threadPool.execute(() -> HttpUtil.downloadFile(url, path + "\\"+SecureUtil.md5(url) + ".jpg"));
+    public static void downloadFIle(String url, String path, String fileNmae) {
+        HttpUtil.downloadFile(url, path + fileNmae);
+    }
+
+    /**
+     * 针对群聊的保存图片功能
+     * 该方法可以指定文件名
+     *
+     * @param group_id 群号
+     * @param user_id  用户
+     * @param url      图片直链
+     * @param fileName 文件名
+     */
+    public static void downloadGroupImage(String group_id, String user_id, String url, String fileName) {
+        downloadFIle(url, "E:\\qqbot\\群聊图片" + getTimePathImage() + group_id + "\\" + user_id + "\\", fileName);
+    }
+
+
+    /**
+     * 针对群聊的保存图片功能
+     *
+     * @param jsonObject json图片样式
+     * @param group_id   群号
+     * @param user_id    qq号
+     */
+    public static void downloadGroupImage(@NonNull JSONObject jsonObject, String group_id, String user_id) {
+        String file = jsonObject.getByPath("data.file", String.class);
+        String url = jsonObject.getByPath("data.url", String.class);
+        downloadGroupImage(group_id, user_id, url, file.replace(".image", ".jpg"));
+    }
+
+    /**
+     * 针对群聊的保存图片功能
+     * 多线程执行,相应快
+     *
+     * @param list     json图片样式List集合
+     * @param group_id 群号
+     * @param user_id  QQ号
+     */
+    public static void downloadGroupImageThread(List<JSONObject> list, String group_id, String user_id) {
+        @SuppressWarnings("all")
+        ExecutorService threadPool = Executors.newFixedThreadPool(list.size());
+        try {
+            for (JSONObject entries : list) {
+                threadPool.execute(() -> downloadGroupImage(entries, group_id, user_id));
             }
+        } finally {
             threadPool.shutdown();
         }
     }
 
     /**
-     * 针对群聊的保存图片功能
+     * 针对群聊撤回时保存图片功能
      *
-     * @param messageJson json消息
-     * @param group       群聊号
-     * @param user_id     用户
+     * @param url
+     * @param group
+     * @param user_id
+     * @param fileName 文件名
      */
-    public static void downloadGroupImage(JSONArray messageJson, String group, String user_id) {
-        downloadMessageImageFIle(messageJson, "E:\\qqbot\\群聊图片" + getTimePathImage() + group + "\\" + user_id);
+    public static void downloadGroupRecallImage(String url, String group, String user_id, String fileName) {
+        downloadFIle(url, "E:\\qqbot\\群聊撤回图片" + getTimePathImage() + group + "\\" + user_id + "\\", fileName);
+    }
+
+    /**
+     * 针对群聊的撤回保存图片功能
+     * 单个图片样式
+     *
+     * @param jsonObject json图片样式
+     * @param group_id   群号
+     * @param user_id    qq号
+     */
+    public static void downloadGroupRecallImage(@NonNull JSONObject jsonObject, String group_id, String user_id) {
+        String file = jsonObject.getByPath("data.file", String.class);
+        String url = jsonObject.getByPath("data.url", String.class);
+        downloadGroupRecallImage(group_id, user_id, url, file.replace(".image", ".jpg"));
     }
 
     /**
      * 针对群聊撤回时保存图片功能
+     * 多线程执行
      *
-     * @param messageJson json消息
-     * @param group_id    用户
+     * @param list     图片直链的集合
+     * @param group_id 群聊号
+     * @param user_id  用户
      */
-    public static void downloadGroupRecallImage(JSONArray messageJson, String group_id, String user_id) {
-        downloadMessageImageFIle(messageJson, "E:\\qqbot\\群聊撤回图片" + getTimePathImage() + group_id + "\\" + user_id);
-    }
-
-
-    /**
-     * 针对私聊的保存图片功能
-     *
-     * @param messageJson json消息
-     * @param user_id     用户
-     */
-    public static void downloadProvideImage(JSONArray messageJson, String user_id) {
-        downloadMessageImageFIle(messageJson, "E:\\qqbot\\私聊图片" + getTimePathImage() + user_id);
-    }
-
-    /**
-     * 针对私聊撤回时保存图片功能
-     *
-     * @param messageJson json消息
-     * @param user_id     用户
-     */
-    public static void downloadProvideRecallImage(JSONArray messageJson, String user_id) {
-        downloadMessageImageFIle(messageJson, "E:\\qqbot\\私聊撤回图片" + getTimePathImage() + user_id);
+    public static void downloadGroupRecallImageThread(List<JSONObject> list, String group_id, String user_id) {
+        @SuppressWarnings("all")
+        ExecutorService threadPool = Executors.newFixedThreadPool(list.size());
+        try {
+            for (JSONObject v : list) {
+                threadPool.execute(() -> downloadGroupRecallImage(v, group_id, user_id));
+            }
+        } finally {
+            threadPool.shutdown();
+        }
     }
 
 
