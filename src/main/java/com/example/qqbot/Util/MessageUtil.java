@@ -379,6 +379,8 @@ public class MessageUtil {
             for (JSONObject entries : list) {
                 threadPool.execute(() -> downloadGroupImage(entries, group_id, user_id));
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         } finally {
             threadPool.shutdown();
         }
