@@ -1,27 +1,19 @@
 package com.example.qqbot.function;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.Util.SignalUtil;
 import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
-import lombok.Data;
-import lombok.SneakyThrows;
-import org.jsoup.Connection;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
+ * 群解谜语逻辑层
+ *
  * @author byhgz
  * @version 1.0
  * @date 2023/2/16 22:12
@@ -84,7 +76,6 @@ public class RiddleModel implements Runnable, IMessageEvent {
     public void run() {
 
     }
-
 
 
 }
