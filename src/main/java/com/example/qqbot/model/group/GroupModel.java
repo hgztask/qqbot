@@ -22,12 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 群聊逻辑层
@@ -56,6 +54,10 @@ public class GroupModel implements Runnable, IMessageEvent {
      */
     private static Set<String> BLACKGROUPID = GroupReReadingModel.getFileJson(BLACK_PATHF_FILE);
 
+    /**
+     * 记录存储一直戳一戳的成员
+     */
+    private static final Set<String> USER_IDPOKESET = new HashSet<>();
 
     /**
      * 表情包api
@@ -123,6 +125,7 @@ public class GroupModel implements Runnable, IMessageEvent {
 
         //是否是超级用户发的消息
         boolean boolSupeRuser = DataUserEights.SUPERUSER.contains(user_id);
+
 
         String raw_message = dataGroup.getRaw_message();
         if (raw_message.startsWith("查询当前群聊黑名单状态") && boolSupeRuser) {
@@ -731,6 +734,45 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
 
+        if (raw_message.startsWith("一直戳一戳") && boolSupeRuser) {
+            String oneAtID = MessageUtil.getOneAtID(messageJson);
+            if (oneAtID.isEmpty()) {
+                return;
+            }
+            if (!(USER_IDPOKESET.add(user_id))) {
+                SignalUtil.sendGroupMessage(group_id, "添加失败!,已经添加过了");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "添加成功成功!");
+            ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
+            threadExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    while (USER_IDPOKESET.contains(user_id)) {
+                        SignalUtil.sendGroupMessage(group_id, DataJson.groupPoke(user_id));
+                        try {
+                            TimeUnit.SECONDS.sleep(2);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            });
+            threadExecutor.shutdown();
+            return;
+        }
+        if (raw_message.startsWith("取消一直戳一戳") && boolSupeRuser) {
+            String oneAtID = MessageUtil.getOneAtID(messageJson);
+            if (oneAtID.isEmpty()) {
+                return;
+            }
+            if (USER_IDPOKESET.remove(user_id)) {
+                SignalUtil.sendGroupMessage(group_id, "取消成功!");
+                return;
+            }
+            SignalUtil.sendGroupMessage(group_id, "取消失败!");
+            return;
+        }
         for (String key : mochaImageUrlMap.keySet()) {
             if (!(raw_message.startsWith(key))) {
                 continue;
@@ -919,8 +961,6 @@ public class GroupModel implements Runnable, IMessageEvent {
             log.info("是语音消息!");
             return false;
         }
-
-
         this.run();
         return true;
     }

@@ -56,8 +56,9 @@ public class GroupStamp implements Runnable, IMessageEvent {
         if (DataUserEights.BOTUSERID.contains(target_id)) {
 
         }
-
         log.info("检测到群戳一戳了!");
+
+        System.out.println(dataPoke.toString());
 
 
         return true;
