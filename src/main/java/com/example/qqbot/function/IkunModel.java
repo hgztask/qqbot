@@ -32,8 +32,8 @@ public class IkunModel implements Runnable, IMessageEvent {
     /**
      * 坤坤关键词
      */
-    private static final List<String> IKUNLISET = ListUtil.toList("ikun", "小黑子", "IKUN", "食不食油饼", "鸡哥",
-            "坤", "你干嘛","球","太美","白带","异常","再看一眼","靠近一点","铁山靠","爆炸","只因","鸡因","哎呦","两年半");
+    private static final List<String> IKUNLISET = ListUtil.toList("ikun", "小黑子", "IKUN", "油饼", "鸡哥", "坤", "你干嘛", "球", "太美",
+            "白带", "异常", "再看一眼", "靠近一点", "铁山靠", "爆炸", "只因", "鸡因", "哎呦", "两年半", "律师函", "香精煎鱼", "素质", "树枝", "荔枝");
 
 
     /**
@@ -81,8 +81,6 @@ public class IkunModel implements Runnable, IMessageEvent {
             return;
         }
         log.info("发送成功!");
-
-
 
 
     }
