@@ -2,9 +2,7 @@ package com.example.qqbot.data.json;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.example.qqbot.Util.SignalUtil;
 import lombok.NonNull;
-import org.junit.jupiter.api.Test;
 
 import java.util.Collection;
 
@@ -103,6 +101,7 @@ public class DataJson {
 
     /**
      * 封装json样式的image类型消息
+     * 只能发送网络图片
      *
      * @param file  文件名
      * @param url   网络地址
@@ -110,14 +109,30 @@ public class DataJson {
      * @return jsonObj对象
      */
     public static JSONObject imageUrl(String file, String url, boolean cache) {
-        JSONObject jsonObject = new JSONObject();
-        JSONObject data = new JSONObject();
+        JSONObject jsonObject = new JSONObject(2);
+        JSONObject data = new JSONObject(3);
         jsonObject.set("type", "image");
         jsonObject.set("data", data);
         data.set("file", file);
         data.set("url", url);
         data.set("cache", cache ? 1 : 0);
         return jsonObject;
+    }
+
+    /**
+     * 封装json样式的image类型消息
+     * 只能发送本地图片或者是缓存的图片文件如 8f538f3a4d55097bae7ad559aab40337.image 等
+     *
+     * @param file 本地绝对路径
+     * @return
+     */
+    public static JSONObject imageFile(String file) {
+        JSONObject imageFIle = new JSONObject(2);
+        imageFIle.set("type", "image");
+        JSONObject data = new JSONObject(1);
+        imageFIle.set("data", data);
+        data.set("file", "file:///"+file);
+        return imageFIle;
     }
 
     /**
@@ -133,16 +148,6 @@ public class DataJson {
     }
 
 
-    @Test
-    void test0() {
-        String url = "http://cdn.u1.huluxia.com/g4/M01/3B/11/rBAAdmEIrYOAB5dFAANG9nrQnp057.jpeg";
-        JSONObject json = imageUrl("里", url, true);
-        //System.out.println(json.toStringPretty());
-
-
-        JSONObject jsonObject = SignalUtil.sendGroupMessage("528828094", json.toString());
-        System.out.println(jsonObject);
-    }
 
     /**
      * nodeData节点,需要配合node节点使用!!!!
