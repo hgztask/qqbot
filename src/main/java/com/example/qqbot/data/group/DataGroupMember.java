@@ -55,7 +55,7 @@ public class DataGroupMember {
     /**
      * 成员等级
      */
-    private String level;
+    private int level;
     /**
      * 角色, owner 或 admin 或 member
      */
