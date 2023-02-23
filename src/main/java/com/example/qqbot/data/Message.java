@@ -31,6 +31,11 @@ public class Message {
      * 通知类型,比如群消息撤回,有人被禁言等,群人数增加
      */
     private String notice_type;
+
+    /**
+     * 提示类型
+     */
+    private String sub_type;
     /**
      * 时间戳
      */
