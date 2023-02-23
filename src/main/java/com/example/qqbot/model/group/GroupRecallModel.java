@@ -15,6 +15,8 @@ import com.example.qqbot.data.group.DataGroupRecall;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
  * 群撤回逻辑层
  *
@@ -51,7 +53,8 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
         String nickname = sender.get("nickname", String.class);
         String group_id = dataRecall.getGroup_id();
         JSONArray messageJson = dataRecall.getMessage();
-        MessageUtil.downloadGroupRecallImage(messageJson, group_id,user_id);
+        List<JSONObject> typeImageList = MessageUtil.getTypeImageList(messageJson);
+        MessageUtil.downloadGroupImageThread(typeImageList, group_id, user_id);
         SignalUtil.sendPrivateMessage(CharSequenceUtil.format("""
                 ===群撤回消息记录====
                 群聊:{}
@@ -68,7 +71,6 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
         }
         log.info("已将消息推送给超级用户!");
     }
-
 
     /**
      * 权重,权重高的值会先匹配
@@ -102,8 +104,6 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
         this.run();
         return false;
     }
-
-
 
 
 }

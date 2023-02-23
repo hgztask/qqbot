@@ -117,11 +117,14 @@ public class GroupModel implements Runnable, IMessageEvent {
         Set<String> re_reading_member_set = GroupReReadingModel.getMEMBER_SET();
 
 
-        Set<String> typeImageURLList = MessageUtil.getTypeImageURLList(messageJson);
-        for (String url : typeImageURLList) {
-            MessageUtil.downloadGroupImage(messageJson, group_id, user_id);
+        List<JSONObject> typeImageList = MessageUtil.getTypeImageList(messageJson);
+        if (!(typeImageList.isEmpty())) {
+            MessageUtil.downloadGroupImageThread(typeImageList, group_id, user_id);
         }
-
+        JSONObject typeVideo = MessageUtil.getTypeVideo(messageJson);
+        if (!(typeVideo.isEmpty())) {
+            MessageUtil.downloadGroupVideoThread(typeVideo, group_id, user_id);
+        }
 
         //是否是超级用户发的消息
         boolean boolSupeRuser = DataUserEights.SUPERUSER.contains(user_id);
