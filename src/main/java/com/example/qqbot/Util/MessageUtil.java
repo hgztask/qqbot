@@ -2,7 +2,6 @@ package com.example.qqbot.Util;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.crypto.SecureUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -316,6 +315,9 @@ public class MessageUtil {
      * @param user_id  QQ号
      */
     public static void downloadGroupImageThread(List<JSONObject> list, String group_id, String user_id) {
+        if (list.isEmpty()) {
+            return;
+        }
         @SuppressWarnings("all")
         ExecutorService threadPool = Executors.newFixedThreadPool(list.size());
         try {
@@ -362,6 +364,9 @@ public class MessageUtil {
      * @param user_id  用户
      */
     public static void downloadGroupRecallImageThread(List<JSONObject> list, String group_id, String user_id) {
+        if (list.isEmpty()) {
+            return;
+        }
         @SuppressWarnings("all")
         ExecutorService threadPool = Executors.newFixedThreadPool(list.size());
         try {
