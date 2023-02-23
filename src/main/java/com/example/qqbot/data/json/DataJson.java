@@ -13,6 +13,12 @@ import java.util.Collection;
  */
 public class DataJson {
 
+    private static JSONObject type(String type) {
+        JSONObject entries = new JSONObject();
+        entries.set("type", type);
+        return entries;
+    }
+
     /**
      * json样式文本
      *
@@ -20,10 +26,11 @@ public class DataJson {
      * @return
      */
     public static JSONObject text(String text) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.set("type", "text");
-        jsonObject.set("data", new JSONObject().set("text", text));
-        return jsonObject;
+        JSONObject type = type("text");
+        JSONObject data = new JSONObject(1);
+        data.set("text", text);
+        type.set("data", data);
+        return type;
     }
 
     /**
@@ -33,10 +40,7 @@ public class DataJson {
      * @return
      */
     public static JSONObject text(StringBuilder text) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.set("type", "text");
-        jsonObject.set("data", new JSONObject().set("text", text));
-        return jsonObject;
+        return text(text.toString());
     }
 
     /**
@@ -46,12 +50,11 @@ public class DataJson {
      * @return jsonobj对象
      */
     public static JSONObject reply(String message_id) {
-        JSONObject jsonObject = new JSONObject();
-        JSONObject data = new JSONObject();
+        JSONObject reply = type("reply");
+        JSONObject data = new JSONObject(2);
+        reply.set("data", data);
         data.set("id", message_id);
-        jsonObject.set("type", "reply");
-        jsonObject.set("data", data);
-        return jsonObject;
+        return reply;
     }
 
     /**
@@ -79,13 +82,12 @@ public class DataJson {
      * @return json样式对象
      */
     public static JSONObject at(String user_id, String name) {
-        JSONObject jsonObject = new JSONObject(2);
+        JSONObject at = type("at");
         JSONObject data = new JSONObject(2);
-        jsonObject.set("type", "at");
-        jsonObject.set("data", data);
+        at.set("data", data);
         data.set("qq", user_id);
         data.set("name", name);
-        return jsonObject;
+        return at;
     }
 
     /**
@@ -109,14 +111,13 @@ public class DataJson {
      * @return jsonObj对象
      */
     public static JSONObject imageUrl(String file, String url, boolean cache) {
-        JSONObject jsonObject = new JSONObject(2);
+        JSONObject image = type("image");
         JSONObject data = new JSONObject(3);
-        jsonObject.set("type", "image");
-        jsonObject.set("data", data);
+        image.set("data", data);
         data.set("file", file);
         data.set("url", url);
         data.set("cache", cache ? 1 : 0);
-        return jsonObject;
+        return image;
     }
 
     /**
@@ -124,16 +125,57 @@ public class DataJson {
      * 只能发送本地图片或者是缓存的图片文件如 8f538f3a4d55097bae7ad559aab40337.image 等
      *
      * @param file 本地绝对路径
-     * @return
+     * @return jsonObj对象
      */
     public static JSONObject imageFile(String file) {
-        JSONObject imageFIle = new JSONObject(2);
-        imageFIle.set("type", "image");
+        JSONObject image = type("image");
         JSONObject data = new JSONObject(1);
-        imageFIle.set("data", data);
-        data.set("file", "file:///"+file);
-        return imageFIle;
+        image.set("data", data);
+        data.set("file", "file:///" + file);
+        return image;
     }
+
+    /**
+     * 封装json样式的video类型消息
+     * 只能发送网络视频
+     * 其他请看官方文档
+     *
+     * @param file 文件名
+     * @param url  视频直链
+     * @return jsonObj对象
+     */
+    public static JSONObject videoUrl(String file, String url) {
+        JSONObject video = type("video");
+        JSONObject data = new JSONObject(2);
+        video.set("data", data);
+        data.set("file", file);
+        data.set("url", url);
+        return video;
+    }
+
+    /**
+     * 群戳一戳
+     *
+     * @param user_id 要戳的人
+     * @return jsonObj对象
+     */
+    public static JSONObject groupPoke(String user_id) {
+        JSONObject poke = type("poke");
+        JSONObject data = new JSONObject(1);
+        poke.set("data", data);
+        data.set("qq", user_id);
+        return poke;
+    }
+
+
+    public static JSONObject face(String id) {
+        JSONObject face = type("face");
+        JSONObject data = new JSONObject();
+        face.set("data", data);
+        data.set("id", id);
+        return face;
+    }
+
 
     /**
      * node顶部节点,需要配合nodeData节点使用
@@ -146,7 +188,6 @@ public class DataJson {
         node.set("data", null);
         return node;
     }
-
 
 
     /**
