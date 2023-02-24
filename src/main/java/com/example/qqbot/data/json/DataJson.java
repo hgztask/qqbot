@@ -136,10 +136,10 @@ public class DataJson {
     }
 
 
-
     /**
-     *  封装json样式的video类型消息
-     *  俺需要传入file类型使用
+     * 封装json样式的video类型消息
+     * 俺需要传入file类型使用
+     *
      * @param file 路径or网络路径or缓存文件
      * @return
      */
@@ -148,6 +148,7 @@ public class DataJson {
         JSONObject data = new JSONObject(2);
         video.set("data", data);
         data.set("file", file);
+        data.set("c", 15);
         return video;
     }
 
@@ -166,6 +167,7 @@ public class DataJson {
         video.set("data", data);
         data.set("file", file);
         data.set("url", url);
+        data.set("c", 15);
         return video;
     }
 
@@ -181,6 +183,37 @@ public class DataJson {
         return video("file:///" + file);
     }
 
+    /**
+     * 封装json样式的record类型消息,也就是语音
+     * 只能发送网络URL音频文件
+     *
+     * @param file  网络URL路径
+     * @param cache 只在通过网络 URL 发送时有效, 表示是否使用已缓存的文件, 默认 1
+     * @return jsonObj对象
+     */
+    public static JSONObject recordURL(String file, int cache) {
+        JSONObject record = type("record");
+        JSONObject data = new JSONObject();
+        record.set("data", data);
+        data.set("file", file);
+        data.set("cache", cache == 1 ? 1 : 0);
+        return record;
+    }
+
+    /**
+     * 封装json样式的record类型消息,也就是语音
+     * 只能发送本地语音文件
+     *
+     * @param file 本地音频文件路径
+     * @return jsonObj对象
+     */
+    public static JSONObject recordFile(String file) {
+        JSONObject record = type("record");
+        JSONObject data = new JSONObject();
+        record.set("data", data);
+        data.set("file", "file:///" + file);
+        return record;
+    }
 
 
     /**
