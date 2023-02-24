@@ -276,6 +276,7 @@ public class GroupModel implements Runnable, IMessageEvent {
                 }
                 SignalUtil.sendGroupMessage(group_id, "获取腿系列图成功!");
             });
+            threadExecutor.shutdown();
             return;
         }
         if (raw_message.startsWith("原神黄历")) {
