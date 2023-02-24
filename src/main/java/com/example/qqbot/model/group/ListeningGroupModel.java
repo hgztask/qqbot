@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -61,23 +63,28 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
 
     @Override
     public void run() {
-        String raw_message = dataGroup.getRaw_message();
-        //监听的群聊
+        JSONArray messageJson = dataGroup.getMessage();
+
+        //当前群聊群聊
         String group_id = dataGroup.getGroup_id();
         JSONArray list = listeningorblackgroupid.get("推送群聊", JSONArray.class);
         if (list == null || list.isEmpty()) {
             return;
         }
 
-
-        //这里需要增加新功能,要求截取atCQ段落的部分,其余的正常推送!
-        for (Object pushGroupID : list) {
-            if (SignalUtil.sendGroupMessage(String.valueOf(pushGroupID), raw_message).isEmpty()) {
-                log.info("监听群聊推送消息失败!");
-                return;
+        @SuppressWarnings("all")
+        ExecutorService t = Executors.newSingleThreadExecutor();
+        t.execute(() -> {
+            for (Object pushGroupID : list) {
+                if (SignalUtil.sendGroupMessage(String.valueOf(pushGroupID), messageJson).isEmpty()) {
+                    log.info("监听群聊推送消息失败!");
+                    return;
+                }
+                log.info(CharSequenceUtil.format("已将监听{}群聊的消息推送给推送群聊{}", group_id, pushGroupID));
             }
-            log.info(CharSequenceUtil.format("已将监听{}群聊的消息推送给推送群聊{}", group_id, pushGroupID));
-        }
+        });
+        t.shutdown();
+
     }
 
     /**
