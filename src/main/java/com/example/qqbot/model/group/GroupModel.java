@@ -256,23 +256,26 @@ public class GroupModel implements Runnable, IMessageEvent {
             return;
         }
         if (raw_message.startsWith("获取腿系列图")) {
-            SignalUtil.sendGroupMessage(group_id, "正在请求腿系列图中!");
-            JSONArray ban = new JSONArray();
-            for (int i = 0; i < 20; i++) {
-                String url = DataFile.getRandomKey(DataFile.getLEG_SERIESL_IST());
-                ban.add(DataJson.imageUrl(InformationUtil.subEqual("/", url), url, true));
-            }
-            JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", dataGroup.getSelf_id(), ban));
-            if (entries.isEmpty()) {
-                log.info("获取腿系列图出错了!");
-                return;
-            }
-            if (entries.get("retcode", int.class) == 100) {
-                log.info("获取腿系列图出错了!");
-                SignalUtil.sendGroupMessage(group_id, "获取腿系列图出错了!");
-                return;
-            }
-            SignalUtil.sendGroupMessage(group_id, "获取腿系列图成功!");
+            ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
+            threadExecutor.execute(() -> {
+                SignalUtil.sendGroupMessage(group_id, "正在请求腿系列图中!");
+                JSONArray ban = new JSONArray();
+                for (int i = 0; i < 30; i++) {
+                    String url = DataFile.getRandomKey(DataFile.getLEG_SERIESL_IST());
+                    ban.add(DataJson.imageUrl(InformationUtil.subEqual("/", url), url, true));
+                }
+                JSONObject entries = SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", dataGroup.getSelf_id(), ban));
+                if (entries.isEmpty()) {
+                    log.info("获取腿系列图出错了!");
+                    return;
+                }
+                if (entries.get("retcode", int.class) == 100) {
+                    log.info("获取腿系列图出错了!");
+                    SignalUtil.sendGroupMessage(group_id, "获取腿系列图出错了!");
+                    return;
+                }
+                SignalUtil.sendGroupMessage(group_id, "获取腿系列图成功!");
+            });
             return;
         }
         if (raw_message.startsWith("原神黄历")) {
@@ -777,6 +780,8 @@ public class GroupModel implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id, "取消失败!");
             return;
         }
+
+
         for (String key : mochaImageUrlMap.keySet()) {
             if (!(raw_message.contains(key))) {
                 continue;
