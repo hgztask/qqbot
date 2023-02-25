@@ -317,6 +317,13 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
             //当监听群聊数组里没有内容时或者为nul,就不用监听
             return false;
         }
+        list = listeningorblackgroupid.get("推送黑名单", JSONArray.class);
+        if (list.contains(group_id)) {
+            log.info(group_id+"群聊触发了推送黑名单,故不推送到该群");
+            return false;
+        }
+
+
         if (!(list.contains(dataGroup.getGroup_id()))) {
             //不是监听群聊对象
             return false;
