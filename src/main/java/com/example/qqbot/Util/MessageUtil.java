@@ -58,22 +58,6 @@ public class MessageUtil {
 
 
     /**
-     * 获取json消息中的音频json对象
-     *
-     * @param jsonArray 消息列表
-     * @return 语音json对象
-     */
-    public static JSONObject getTypeRecord(@NonNull JSONArray jsonArray) {
-        List<JSONObject> record = MessageUtil.getTypeList("record", jsonArray);
-        if (record.isEmpty()) {
-            return SignalUtil.getJSONOBJNULL();
-        }
-        return record.get(0);
-    }
-
-
-
-    /**
      * 获取json消息中的视频
      * 由于视频会占用整条消息,不会有别的样式元素,也就是一条消息只会有一个视频样式且无其他元素
      *
@@ -213,6 +197,22 @@ public class MessageUtil {
         return atID;
     }
 
+    /**
+     * 获取消息中的第一个text元素,也就是用户自己发的消息而非是引用的消息
+     *
+     * @param jsonArray json消息样式
+     * @return 用户发的消息text
+     */
+    public static String getOneText(JSONArray jsonArray) {
+        String text = "";
+        try {
+            text = getTypeList("text", jsonArray).get(0).getByPath("data.text", String.class);
+        } catch (Exception e) {
+            return text;
+        }
+        return text;
+    }
+
 
     /**
      * 获取中消息内容中的json类型的值的类型列表
@@ -296,7 +296,7 @@ public class MessageUtil {
         String month = DateUtil.format(date, "MM");
         String day = DateUtil.format(date, "dd");
         String h = DateUtil.format(date, "HH");
-        return String.format("\\%s年\\%s月\\%s日\\%s时\\", year, month, day, h);
+        return String.format("\\%s年\\%s月%s日\\%s时\\", year, month, day, h);
     }
 
 
@@ -321,7 +321,7 @@ public class MessageUtil {
      * @param fileName 文件名
      */
     private static void downloadGroupRes(String url, String type, String fileName, String group_id, String user_id) {
-        downloadFIle(url, "E:\\qqbot\\" + type + getTimePathImage() + group_id + "\\" + user_id + "\\", fileName);
+        downloadFIle(url, "E:\\qqbot\\" + type + "\\" + group_id + "\\" + user_id + "\\", fileName);
     }
 
     /**
@@ -424,13 +424,13 @@ public class MessageUtil {
     /**
      * 针对群聊撤回时保存图片功能
      *
-     * @param url
-     * @param group
-     * @param user_id
+     * @param url      直接链接
+     * @param group_id 群号
+     * @param user_id  用户QQ
      * @param fileName 文件名
      */
-    public static void downloadGroupRecallImage(String url, String group, String user_id, String fileName) {
-        downloadFIle(url, "E:\\qqbot\\群聊撤回图片" + getTimePathImage() + group + "\\" + user_id + "\\", fileName);
+    public static void downloadGroupRecallImage(String url, String group_id, String user_id, String fileName) {
+        downloadGroupRes(url, "群聊撤回图片", fileName, group_id, user_id);
     }
 
     /**
