@@ -58,6 +58,22 @@ public class MessageUtil {
 
 
     /**
+     * 获取json消息中的音频json对象
+     *
+     * @param jsonArray 消息列表
+     * @return 语音json对象
+     */
+    public static JSONObject getTypeRecord(@NonNull JSONArray jsonArray) {
+        List<JSONObject> record = MessageUtil.getTypeList("record", jsonArray);
+        if (record.isEmpty()) {
+            return SignalUtil.getJSONOBJNULL();
+        }
+        return record.get(0);
+    }
+
+
+
+    /**
      * 获取json消息中的视频
      * 由于视频会占用整条消息,不会有别的样式元素,也就是一条消息只会有一个视频样式且无其他元素
      *
