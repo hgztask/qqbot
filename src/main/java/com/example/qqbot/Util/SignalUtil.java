@@ -429,7 +429,15 @@ public class SignalUtil {
      * @return 该 API 无响应数据
      */
     public static JSONObject setGroupBan(@NonNull String group_id, @NonNull String user_id, @NonNull int duration) {
-        return httpGet(SET_GROUP_BAN, "?group_id=" + group_id + "&user_id=" + user_id + "&duration=" + duration);
+        JSONObject json = httpGet(SET_GROUP_BAN, "?group_id=" + group_id + "&user_id=" + user_id + "&duration=" + duration);
+        if (json.isEmpty()) {
+            return JSONOBJNULL;
+        }
+        Integer retcode = json.get("retcode", int.class);
+        if (retcode == null || !(retcode.equals(0))) {
+            return JSONOBJNULL;
+        }
+        return json;
     }
 
     /**
