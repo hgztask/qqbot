@@ -52,6 +52,8 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
         long time = dataRecall.getTime() * 1000;
         String nickname = sender.get("nickname", String.class);
         String group_id = dataRecall.getGroup_id();
+        log.info(nickname + "群成员" + dataGroupRecall.getUser_id() + "撤回了消息");
+
         JSONArray messageJson = dataRecall.getMessage();
         List<JSONObject> typeImageList = MessageUtil.getTypeImageList(messageJson);
         MessageUtil.downloadGroupImageThread(typeImageList, group_id, user_id);
@@ -100,7 +102,6 @@ public class GroupRecallModel implements Runnable, IMessageEvent {
             //如果是机器人的撤回消息就不用推送消息给超级用户了
             return false;
         }
-        log.info("群成员" + dataGroupRecall.getUser_id() + "撤回了消息");
         this.run();
         return false;
     }
