@@ -317,20 +317,21 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
             //当监听群聊数组里没有内容时或者为nul,就不用监听
             return false;
         }
-        list = listeningorblackgroupid.get("推送黑名单", JSONArray.class);
-        if (list.contains(group_id)) {
-            log.info(group_id+"群聊触发了推送黑名单,故不推送到该群");
-            return false;
-        }
-
-
-        if (!(list.contains(dataGroup.getGroup_id()))) {
+        if (!(list.contains(group_id))) {
             //不是监听群聊对象
             return false;
         }
+
+        list = listeningorblackgroupid.get("推送黑名单", JSONArray.class);
+        if (list.contains(group_id)) {
+            log.info(group_id + "群聊触发了推送黑名单,故不推送到该群");
+            return false;
+        }
+
         list = listeningorblackgroupid.get("黑名单用户", JSONArray.class);
         if (list.contains(user_id)) {
-            log.info("用户触发了监听推送黑名单操作:ser_id=" + user_id);
+            String card = dataGroup.getSender().get("card");
+            log.info(card + "用户触发了监听推送黑名单操作:ser_id=" + user_id);
             return false;
         }
         //判断是否有黑名单群聊
@@ -339,12 +340,13 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
             log.info("群聊触发了监听推送黑名单操作:tgroup_id=" + group_id);
             return false;
         }
+        JSONArray messageJson = dataGroup.getMessage();
         if (raw_message.contains("口令") && "935671622".equals(group_id)) {
             log.info("该资源群触发了广告消息了,故本轮不推送给其他群,直接推送给超级用户");
-            SignalUtil.sendPrivateMessage(DataUserEights.SUPERUSER.get(0), raw_message);
+            SignalUtil.sendPrivateMessage(DataUserEights.SUPERUSER.get(0), messageJson);
             return false;
         }
-        if (MessageUtil.isTypeRecord(dataGroup.getMessage())) {
+        if (MessageUtil.isTypeRecord(messageJson)) {
             log.info("检测到语音类型,故不推送");
             return false;
         }
