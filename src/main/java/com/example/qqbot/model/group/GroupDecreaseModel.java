@@ -100,7 +100,7 @@ public class GroupDecreaseModel implements Runnable, GetTypeFace, IMessageEvent 
      */
     @Override
     public int weight() {
-        return 6;
+        return 0;
     }
 
     /**
