@@ -183,11 +183,17 @@ public class SignalUtil {
      * @return jsonOBj对象
      */
     public static JSONObject httpPost(String type, Map<String, Object> formMap) {
-        HttpResponse execute = HttpRequest.post(MailingAddress.SEND_MESSAGE + type)
-                .method(Method.POST)
-                .addHeaders(headers)
-                .form(formMap)
-                .execute();
+        HttpResponse execute;
+        try {
+            execute = HttpRequest.post(MailingAddress.SEND_MESSAGE + type)
+                    .method(Method.POST)
+                    .addHeaders(headers)
+                    .form(formMap)
+                    .execute();
+        } catch (Exception e) {
+            log.info("出现异常错误信息:" + e.getMessage());
+            throw new RuntimeException(e);
+        }
         if (!(execute.getStatus() == 200)) {
             return JSONOBJNULL;
         }

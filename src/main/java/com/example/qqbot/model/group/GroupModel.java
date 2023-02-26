@@ -60,6 +60,11 @@ public class GroupModel implements Runnable, IMessageEvent {
     private static final Set<String> USER_IDPOKESET = new HashSet<>();
 
     /**
+     * 群违规词
+     */
+    private static final List<String> shieldWordList = InformationUtil.getFIleListJson("E:\\qqbot\\群违规词.json");
+
+    /**
      * 表情包api
      */
     private static final HashMap<String, String> walkImageUrlMap = new HashMap<>();
@@ -115,8 +120,8 @@ public class GroupModel implements Runnable, IMessageEvent {
         String message_id = dataGroup.getMessage_id();
         //消息的json样式
         JSONArray messageJson = dataGroup.getMessage();
-        Set<String> re_reading_member_set = GroupReReadingModel.getMEMBER_SET();
-
+        //发送人信息 包括: QQ昵称 nickname QQ群昵称 card QQ号 user_id
+        Map<String, String> sender = dataGroup.getSender();
 
         List<JSONObject> typeImageList = MessageUtil.getTypeImageList(messageJson);
         if (!(typeImageList.isEmpty())) {
@@ -130,7 +135,6 @@ public class GroupModel implements Runnable, IMessageEvent {
         //是否是超级用户发的消息
         boolean boolSupeRuser = DataUserEights.SUPERUSER.contains(user_id);
 
-
         String raw_message = dataGroup.getRaw_message();
         if (raw_message.startsWith("查询当前群聊黑名单状态") && boolSupeRuser) {
             printIsBlackGroup(group_id);
@@ -140,6 +144,22 @@ public class GroupModel implements Runnable, IMessageEvent {
         if (BLACKGROUPID.contains(group_id)) {
             log.info(group_id + "群触发了黑名单了");
             return;
+        }
+
+        String oneText = MessageUtil.getOneText(messageJson);
+        if (!(oneText.isEmpty())) {
+            if (InformationUtil.isContainsMessAge(shieldWordList, oneText)) {
+                log.info("检测到消息包含了集合内的结果=" + raw_message);
+                ExecutorService t = Executors.newSingleThreadExecutor();
+                t.execute(() -> {
+                    SignalUtil.deleteMsg(message_id);
+                    if (SignalUtil.setGroupBan(group_id, user_id, 60).toStringPretty().isEmpty()) {
+                        log.info("群聊 " + group_id + " 触发了违禁词,禁言失败!");
+                        return;
+                    }
+                });
+                t.shutdown();
+            }
         }
 
 
@@ -823,24 +843,16 @@ public class GroupModel implements Runnable, IMessageEvent {
         }
 
 
-        if (re_reading_member_set.contains(user_id) || InformationUtil.keyContains(GroupReReadingModel.getKEY_SET(), InformationUtil.filtrationCQ(raw_message))) {
-            //复读模块
-            GroupReReadingModel re_reading_model = GroupReReadingModel.getRE_READING_MODEL();
-            re_reading_model.setDataGroup(dataGroup);
-            ExecutorService threadExecutor = Executors.newSingleThreadExecutor();
-            try {
-                threadExecutor.execute(re_reading_model);
-            } finally {
-                threadExecutor.shutdown();
-            }
-            return;
-        }
         if (raw_message.startsWith("执行demo") && boolSupeRuser) {
-            if (SignalUtil.set_group_whole_ban(group_id, true).isEmpty()) {
-                log.info("测试执行群聊禁言失败!");
-                return;
+            SignalUtil.sendGroupMessage(group_id, "正在获取中!");
+            Set<String> randomKeyList = DataFile.getRandomKeyList(DataFile.getHaashmapList(), 20);
+            JSONArray jsonArray = new JSONArray(randomKeyList.size());
+            for (String urlv : randomKeyList) {
+                System.out.println(urlv);
+                String fileName = InformationUtil.lastSubEqual("/", urlv);
+                jsonArray.add(DataJson.imageUrl(fileName, urlv, true));
             }
-            log.info("测试执行群聊禁言成功!");
+            SignalUtil.sendGroupForwardMsg(group_id, DataJson.nodeMerge("机器人", self_id, jsonArray));
             return;
         }
     }
