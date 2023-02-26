@@ -1,10 +1,14 @@
 package com.example.qqbot.model.group;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.example.qqbot.Event.IMessageEvent;
+import com.example.qqbot.Util.InformationUtil;
 import com.example.qqbot.Util.MessageUtil;
 import com.example.qqbot.Util.SignalUtil;
+import com.example.qqbot.data.Message;
 import com.example.qqbot.data.group.DataGroup;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @Component
-public class GroupReReadingModel implements Runnable {
+public class GroupReReadingModel implements Runnable, IMessageEvent {
 
     /**
      * 群聊数据层
@@ -232,11 +236,6 @@ public class GroupReReadingModel implements Runnable {
             return;
         }
 
-        if (MessageUtil.isTypeRecord(dataGroup.getMessage())) {
-            log.info("检测到语音类型,故不复读");
-            return;
-        }
-
         JSONObject json = SignalUtil.sendGroupMessage(group_id, raw_message);
         if (json.isEmpty()) {
             return;
@@ -259,4 +258,51 @@ public class GroupReReadingModel implements Runnable {
 
     }
 
+    /**
+     * 权重,权重高的值会先匹配
+     *
+     * @return 权重值
+     */
+    @Override
+    public int weight() {
+        return 6;
+    }
+
+    /**
+     * 接受消息
+     *
+     * @param jsonObject 原始消息对象
+     * @param message    消息对象
+     * @return 是否匹配成功
+     */
+    @Override
+    public boolean onMessage(JSONObject jsonObject, Message message) {
+        if (!("group".equals(message.getMessage_type()))) {
+            return false;
+        }
+        this.dataGroup = BeanUtil.toBean(jsonObject, DataGroup.class);
+        String user_id = dataGroup.getUser_id();
+        String group_id = dataGroup.getGroup_id();
+        String raw_message = dataGroup.getRaw_message();
+        //群聊消息
+        if ("2854196310".equals(user_id)) {
+            log.info(group_id + "无法回复Q群管家的信息!");
+            return false;
+        }
+        if (MessageUtil.isTypeRecord(dataGroup.getMessage())) {
+            log.info("是语音消息!");
+            return false;
+        }
+        if (MEMBER_SET.contains(user_id)) {
+            this.run();
+            return true;
+        }
+        //是不是包含复读关键词
+        if (InformationUtil.keyContains(KEY_SET, InformationUtil.filtrationCQ(raw_message))) {
+          this.run();
+            return true;
+        }
+
+        return false;
+    }
 }
