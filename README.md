@@ -8,7 +8,27 @@
 
 ## **功能权重表**
 
-![img_1.png](img_1.png)
+| **功能名**          | **类名**                        | **权重值** | **通知类型** | **备注**             |
+|------------------|-------------------------------|---------|----------|--------------------|
+| **群聊发送jk图**      | SendGroupJkDiagram            | 1000    | 群聊       |                    |
+| **推送b站指定用户动态信息** | BiBiDynamicPushModel          | 40      | 群聊       | 要求权重比正常群聊高一级       |
+| **监听b站指定用户直播间弹幕** | BiBiLiveModel                 | 39      | 群聊       | 要求权重比正常群聊高一级       |
+| **私聊窗口**         | PrivateModel                  | 10      | 私聊       |                    |
+| **Ikun小黑子模块**    | IkunModel                     | 6       | 群聊       | 要求权重比正常群聊高一级       |
+| **通过苏苏影视网站搜索资源** | SusuifaResSrechMidel          | 6       | 群聊       | 要求权重比正常群聊高一级       |
+| **监听群聊并推送群聊**    | ListeningGroupModel           | 6       | 群聊       | 要求权重比正常群聊高一级       |
+| **蓝奏云资源搜索**      | LanZuoCloudResourceSearch     | 6       | 群聊       | 要求权重比正常群聊高一级       |
+| **早中午晚安**        | GoodMightSleep                | 6       | 群聊       | 要求权重比正常群聊高一级       |
+| **群聊复读机**        | GroupReReadingModel           | 6       | 群聊       | 要求权重比正常群聊高一级       |
+| **正常群聊**         | GroupModel                    | 5       | 群聊       |                    |
+| **机器人被戳**        | GroupBotStamp                 | 1       | 群戳一戳     | 要求权重比群戳一戳高一级       |
+| **群戳一戳**         | GroupStamp                    | 0       | 群戳一戳     |                    |
+| **监听指定群聊成员撤回内容** | ListeningGroupWithdrawalModel | 1       | 群聊撤回     |                    |
+| **群撤回消息**        | GroupRecallModel              | 0       | 群聊撤回     | 要求权重比监听指定群聊成员撤回高一级 |
+| **私聊撤回**         | FriendRecallModel             | 0       | 私聊撤回     |                    |
+| **群撤回成员被禁言事件**   | groupBanModel                 | 0       | 群禁言      |                    |
+| **群人数减少(退群)**    | GroupDecreaseModel            | 0       | 群人数减少    |                    |
+| **群人数增加(加群)**    | GroupIncreaseModel            | 0       | 群人数增加    |
 
 <hr>
 
