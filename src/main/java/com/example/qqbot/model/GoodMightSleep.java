@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * 晚安睡觉时的逻辑层
+ * 早中午晚安的逻辑层
  *
  * @author byhgz
  * @version 1.0
@@ -40,7 +40,7 @@ public class GoodMightSleep implements Runnable, IMessageEvent {
      */
     @Override
     public int weight() {
-        return 5;
+        return 6;
     }
 
     /**
@@ -81,7 +81,7 @@ public class GoodMightSleep implements Runnable, IMessageEvent {
             SignalUtil.sendGroupMessage(group_id,"下午好!");
             return true;
         }
-        return true;
+        return false;
     }
 
 
