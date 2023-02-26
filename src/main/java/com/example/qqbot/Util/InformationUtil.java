@@ -2,12 +2,18 @@ package com.example.qqbot.Util;
 
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -26,8 +32,6 @@ public class InformationUtil {
     private static final Random RANDOM = new Random();
 
 
-
-
     /**
      * 获取指定关键词后面的内容
      * 且关键词是最靠前的那一个
@@ -39,6 +43,7 @@ public class InformationUtil {
      * @param str 字符串
      * @return 截取之后的内容
      */
+    @SuppressWarnings("all")
     public static String subEqual(String key, String str) {
         if (key.equals(str)) {//关键词和内容相同不用截取了
             return "";
@@ -232,7 +237,29 @@ public class InformationUtil {
             throw new RuntimeException(e);
         }
         return getSize(value);
+    }
 
+
+    /**
+     * 获取指定路径jso文件的jsonArr数组集合对象
+     *
+     * @param file 路径
+     * @return list字符串集合
+     */
+    public static List<String> getFIleListJson(String file) {
+        ArrayList<String> list = new ArrayList<>(0);
+        JSONArray jsonArray;
+        try {
+            jsonArray = JSONUtil.readJSONArray(new File(file), StandardCharsets.UTF_8);
+        } catch (IORuntimeException e) {
+            log.info("出现异常了=" + e.getMessage());
+            return list;
+        }
+        for (Object v : jsonArray) {
+            list.add(v.toString());
+
+        }
+        return list;
     }
 
 
