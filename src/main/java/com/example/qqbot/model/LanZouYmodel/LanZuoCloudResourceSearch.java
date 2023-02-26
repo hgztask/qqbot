@@ -146,6 +146,6 @@ public class LanZuoCloudResourceSearch implements Runnable, IMessageEvent {
             return false;
         }
         this.run();
-        return false;
+        return true;
     }
 }
