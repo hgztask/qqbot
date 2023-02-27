@@ -4,7 +4,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.example.qqbot.Event.IMessageEvent;
 import com.example.qqbot.data.DataPoke;
-import com.example.qqbot.data.DataUserEights;
 import com.example.qqbot.data.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -52,13 +51,9 @@ public class GroupStamp implements Runnable, IMessageEvent {
         }
         this.dataPoke = JSONUtil.toBean(jsonObject, DataPoke.class);
         //被戳者 QQ 号
-        String target_id = dataPoke.getTarget_id();
-        if (DataUserEights.BOTUSERID.contains(target_id)) {
-
-        }
+        //String target_id = dataPoke.getTarget_id();
         log.info("检测到群戳一戳了!");
 
-        System.out.println(dataPoke.toString());
 
 
         return true;

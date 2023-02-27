@@ -18,7 +18,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +59,13 @@ public class ListeningGroupModel implements Runnable, IMessageEvent {
      * 记录重复值
      */
     private static String groupEqualStr = "";
+
+
+    /**
+     * 存储群聊和对应的内容,如果相同则不复读
+     */
+    private static Map<String, Map<String,String>> groupIdenticalMap = new HashMap<>();
+
 
 
     private DataGroup dataGroup;
