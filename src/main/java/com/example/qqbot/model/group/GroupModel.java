@@ -3,7 +3,6 @@ package com.example.qqbot.model.group;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -164,7 +163,7 @@ public class GroupModel implements Runnable, IMessageEvent {
 
 
         if (isPrintGroupMessageConsole) {
-            log.info(StrUtil.format("{}群消息={}", dataGroup.getGroup_id(), raw_message));
+            log.info(CharSequenceUtil.format("{}群 {} 消息={}", group_id,sender.get("card"),raw_message));
         }
         if (InformationUtil.isContainsMessAge(PGRModel.getPGR_CONSCIOUS_COLLOCATION(), raw_message) && !(group_id.equals("942611877"))) {
             PGRModel.consciousnessPGRTable(group_id, user_id);
