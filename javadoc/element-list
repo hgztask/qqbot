@@ -13,4 +13,5 @@ com.example.qqbot.model.group
 com.example.qqbot.model.LanZouYmodel
 com.example.qqbot.model.pgr
 com.example.qqbot.model.privateModel
+com.example.qqbot.thread
 com.example.qqbot.Util
