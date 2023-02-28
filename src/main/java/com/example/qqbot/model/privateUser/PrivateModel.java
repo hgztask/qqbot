@@ -1,4 +1,4 @@
-package com.example.qqbot.model.privateModel;
+package com.example.qqbot.model.privateUser;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
